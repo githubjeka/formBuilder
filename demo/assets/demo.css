@@ -1,5 +1,5 @@
 /*
-formBuilder - git@github.com:kevinchappell/formBuilder.git
+formBuilder - http://kevinchappell.github.io/formBuilder/
 Version: 1.3.0
 Author: Kevin Chappell <kevin.b.chappell@gmail.com>
 */
