@@ -179,4 +179,5 @@ gulp.task('deploy', () => {
   });
 });
 
-gulp.task('default', ['js', 'css', 'demoCss', 'watch', 'serve']);
+gulp.task('default', ['js', 'css']);
+gulp.task('demo', ['js', 'css', 'demoCss', 'watch', 'serve']);
