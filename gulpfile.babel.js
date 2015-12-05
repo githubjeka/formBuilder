@@ -30,6 +30,7 @@ const files = {
   formBuilder: {
     js: [
       'src/js/kc-toggle.js',
+      'src/js/to-xml.js',
       'src/js/form-builder.js'
     ],
     sass: ['src/sass/form-builder.scss']
@@ -48,7 +49,7 @@ const files = {
 
 gulp.task('watch', function() {
   gulp.watch(['src/**/*.js'], ['lint', 'js']);
-  gulp.watch('demo/index.html', reload);
+  gulp.watch('demo/index.html', bsync.reload);
   gulp.watch('src/sass/*.scss', ['css']);
   gulp.watch(files.demoSass, ['demoCss']);
 });
@@ -118,13 +119,13 @@ gulp.task('js', function() {
       buildDate = new Date();
     return gulp.src(jsFileGlob)
       .pipe(plugins.babel())
-      .pipe(concat(fileName + '.js'))
+      .pipe(plugins.concat(fileName + '.js'))
       .pipe(banner())
       .pipe(gulp.dest('demo/assets'))
       .pipe(gulp.dest('dist/'))
       .pipe(plugins.uglify())
       .pipe(banner())
-      .pipe(concat(fileName + '.min.js'))
+      .pipe(plugins.concat(fileName + '.min.js'))
       .pipe(gulp.dest('demo/assets'))
       .pipe(gulp.dest('dist/'))
       .pipe(bsync.reload({
