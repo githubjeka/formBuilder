@@ -10,7 +10,7 @@ var banner = () => {
   let buildDate = new Date();
   let bannerTemplate = [
     '/*',
-    '<%= pkg.name %> - <%= pkg.repository.url %>',
+    '<%= pkg.name %> - <%= pkg.homepage %>',
     'Version: <%= pkg.version %>',
     'Author: <%= pkg.authors[0] %>',
     '*/',
