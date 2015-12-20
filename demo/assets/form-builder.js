@@ -48,8 +48,6 @@ Author: Kevin Chappell <kevin.b.chappell@gmail.com>
     });
   };
 })(jQuery);
-
-// toXML is a jQuery plugin that turns our form editor into custom XML
 'use strict';
 
 (function ($) {
@@ -79,9 +77,10 @@ Author: Kevin Chappell <kevin.b.chappell@gmail.com>
               var required = $('input.required', $field).is(':checked') ? 'required="true" ' : 'required="false" ',
                   multipleChecked = $('input[name="multiple"]', $field).is(':checked'),
                   multiple = multipleChecked ? 'style="multiple" ' : '',
-                  t = $field.attr(opts.attributes[att]),
+                  t = $field.attr(opts.attributes[att]).replace(' form-field', ''),
                   // field type
-              type = 'type="' + t + '" ',
+              multipleField = t.match(/(select|checkbox-group|radio-group)/),
+                  type = 'type="' + t + '" ',
                   fName = 'name="' + $('input.fld-name', $field).val() + '" ',
                   fLabel = 'label="' + $('input.fld-label', $field).val() + '" ',
                   roleVals = $.map($('input.roles-field:checked', $field), function (n) {
@@ -91,17 +90,19 @@ Author: Kevin Chappell <kevin.b.chappell@gmail.com>
                   desc = 'description="' + $('input.fld-description', $field).val() + '" ',
                   maxLengthVal = $('input.fld-max-length', $field).val(),
                   maxLength = 'max-length="' + (maxLengthVal !== undefined ? maxLengthVal : '') + '" ',
-                  fSlash = t !== 'select' && t !== 'checkbox-group' ? '/' : '';
+                  fSlash = !multipleField ? '/' : '';
 
-              serialStr += '\n\t\t<field ' + fName + fLabel + multiple + roles + desc + (maxLengthVal !== '' ? maxLengthVal !== undefined ? maxLength : '' : '') + required + type + fSlash + '>';
+              var fToggle = $('.checkbox-toggle', $field).is(':checked') ? 'toggle="true" ' : '';
 
-              if (t === 'select' || t === 'checkbox-group') {
+              serialStr += '\n\t\t<field ' + fName + fLabel + fToggle + multiple + roles + desc + (maxLengthVal !== '' ? maxLengthVal !== undefined ? maxLength : '' : '') + required + type + fSlash + '>';
+              if (multipleField) {
                 c = 1;
-                $('input[type=text][class=option]', $field).each(function () {
-                  if ($(this).attr('name') !== 'title') {
-                    var selected = $(this).prev().is(':checked') ? ' selected="true"' : '';
-                    serialStr += '\n\t\t\t<option' + selected + '>' + $(this).val() + '</option>';
-                  }
+                $('.sortable-options li', $field).each(function () {
+                  var $option = $(this),
+                      optionValue = 'value="' + $('.option-value', $option).val() + '"',
+                      optionLabel = $('.option-label', $option).val(),
+                      selected = $('.select-option', $option).is(':checked') ? ' selected="true"' : '';
+                  serialStr += '\n\t\t\t<option' + selected + ' ' + optionValue + '>' + optionLabel + '</option>';
                   c++;
                 });
                 serialStr += '\n\t\t</field>';
@@ -121,8 +122,10 @@ Author: Kevin Chappell <kevin.b.chappell@gmail.com>
 (function ($) {
   'use strict';
   var FormBuilder = function FormBuilder(element, options) {
+    var _this = this;
 
     var defaults = {
+      dataType: 'json', // xml or json
       // Uneditable fields or other content you would like to
       // appear before and after regular fields.
       disableFields: {
@@ -210,7 +213,47 @@ Author: Kevin Chappell <kevin.b.chappell@gmail.com>
 
     var startIndex,
         doCancel,
+        formData = new Map(),
         _helpers = {};
+
+    function Field(fieldData) {
+      this.elem = elem;
+    }
+
+    Field.prototype.json = function () {
+      var required = $('input.required', _this).is(':checked') ? 'required="true" ' : 'required="false" ',
+
+      // multipleChecked = $('input[name="multiple"]', this).is(':checked'),
+      multiple = multipleChecked ? 'style="multiple" ' : '',
+          type = _this.attr(opts.attributes[att]).replace(' form-field', ''),
+          multipleField = type.match(/(select|checkbox-group|radio-group)/),
+          fName = 'name="' + $('input.fld-name', _this).val() + '" ',
+          fLabel = 'label="' + $('input.fld-label', _this).val() + '" ',
+          roleVals = $.map($('input.roles-field:checked', _this), function (n) {
+        return n.value;
+      }).join(','),
+          roles = roleVals !== '' ? 'role="' + roleVals + '" ' : '',
+          desc = $('input.fld-description', _this).val(),
+          maxLengthVal = $('input.fld-max-length', $field).val(),
+          maxLength = 'max-length="' + (maxLengthVal !== undefined ? maxLengthVal : '') + '" ',
+          fSlash = !multipleField ? '/' : '';
+
+      var fToggle = $('.checkbox-toggle', $field).is(':checked') ? 'toggle="true" ' : '';
+
+      serialStr += '\n\t\t<field ' + fName + fLabel + fToggle + multiple + roles + desc + (maxLengthVal !== '' ? maxLengthVal !== undefined ? maxLength : '' : '') + required + type + fSlash + '>';
+      if (multipleField) {
+        c = 1;
+        $('.sortable-options li', $field).each(function () {
+          var $option = $(this),
+              optionValue = 'value="' + $('.option-value', $option).val() + '"',
+              optionLabel = $('.option-label', $option).val(),
+              selected = $('.select-option', $option).is(':checked') ? ' selected="true"' : '';
+          serialStr += '\n\t\t\t<option' + selected + ' ' + optionValue + '>' + optionLabel + '</option>';
+          c++;
+        });
+        serialStr += '\n\t\t</field>';
+      }
+    };
 
     /**
      * Remove duplicates from an array of elements
@@ -287,10 +330,17 @@ Author: Kevin Chappell <kevin.b.chappell@gmail.com>
 
     // saves the field data to our canvas (elem)
     _helpers.save = function () {
-      $sortableFields.children('li').not('.disabled').each(function () {
-        _helpers.updatePreview($(this));
-      });
-      elem.val($sortableFields.toXML());
+
+      var $fields = $sortableFields.children('li.form-field').not('.disabled');
+
+      console.log(formData);
+
+      if ('xml' === opts.dataType) {
+        elem.val($sortableFields.toXML());
+      } else {
+        // var fieldJSON =
+
+      }
     };
 
     // updatePreview will generate the preview for radio and checkbox groups
@@ -302,6 +352,7 @@ Author: Kevin Chappell <kevin.b.chappell@gmail.com>
       //   var label = $('.option-label', $(this)).val();
       //   preview += option + ' ' + label + '<br/>';
       // });
+
       $('.prev-holder', field).html(preview);
     };
 
@@ -351,7 +402,7 @@ Author: Kevin Chappell <kevin.b.chappell@gmail.com>
         }, 1000, function () {
           var targetID = $('.toggle-form', errors[0].field).attr('id');
           $('.toggle-form', errors[0].field).addClass('open').parent().next('.prev-holder').slideUp(250);
-          $('#' + targetID + '-fld').slideDown(250, function () {
+          $(document.getElementById(targetID + '-fld')).slideDown(250, function () {
             errors[0].attribute.addClass('error');
           });
         });
@@ -529,7 +580,7 @@ Author: Kevin Chappell <kevin.b.chappell@gmail.com>
     // Setup the input fields
     var frmbFields = fieldTypes.map(function (elem) {
 
-      // be sure elem.ident is converted to camelCase to get label
+      // be sure elem.id is converted to camelCase to get label
       var fieldLabel = elem.id.toCamelCase(),
           idName = _helpers.nameAttr(elem.id),
           fieldData = {
@@ -758,12 +809,13 @@ Author: Kevin Chappell <kevin.b.chappell@gmail.com>
       }, [toggleBtn, delBtn]);
 
       var liContent = _helpers.markup('div', {
-        id: 'frm-' + lastID + '-fld',
         'class': 'field-properties'
       }, fieldProperties(fieldData.properties));
 
       li = _helpers.markup('li', {
-        id: 'frm-' + lastID + '-item',
+        // id: 'frm-' + lastID + '-item',
+        id: _helpers.nameAttr(fieldData.attrs.type),
+        'data-type': fieldData.attrs.type,
         'class': fieldData.attrs.type + ' form-field'
       }, [fieldActions, fieldLabel, fieldPreview(fieldData), liContent]);
 
@@ -776,6 +828,9 @@ Author: Kevin Chappell <kevin.b.chappell@gmail.com>
       $(document.getElementById('frm-' + lastID + '-item')).hide().slideDown(250);
 
       lastID++;
+
+      var curFieldData = JSON.stringify(fieldData);
+      formData.set(fieldData.attrs.id, curFieldData);
       _helpers.save();
     };
 

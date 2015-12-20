@@ -1,5 +1,3 @@
-
-// toXML is a jQuery plugin that turns our form editor into custom XML
 (function($) {
   'use strict';
   $.fn.toXML = function(options) {
@@ -27,7 +25,8 @@
               var required = $('input.required', $field).is(':checked') ? 'required="true" ' : 'required="false" ',
                 multipleChecked = $('input[name="multiple"]', $field).is(':checked'),
                 multiple = multipleChecked ? 'style="multiple" ' : '',
-                t = $field.attr(opts.attributes[att]), // field type
+                t = $field.attr(opts.attributes[att]).replace(' form-field', ''), // field type
+                multipleField = t.match(/(select|checkbox-group|radio-group)/),
                 type = 'type="' + t + '" ',
                 fName = 'name="' + $('input.fld-name', $field).val() + '" ',
                 fLabel = 'label="' + $('input.fld-label', $field).val() + '" ',
@@ -38,17 +37,19 @@
                 desc = 'description="' + $('input.fld-description', $field).val() + '" ',
                 maxLengthVal = $('input.fld-max-length', $field).val(),
                 maxLength = 'max-length="' + (maxLengthVal !== undefined ? maxLengthVal : '') + '" ',
-                fSlash = (t !== 'select' && t !== 'checkbox-group' ? '/' : '');
+                fSlash = (!multipleField ? '/' : '');
 
-              serialStr += '\n\t\t<field ' + fName + fLabel + multiple + roles + desc + (maxLengthVal !== '' ? (maxLengthVal !== undefined ? maxLength : '') : '') + required + type + fSlash + '>';
+              var fToggle = $('.checkbox-toggle', $field).is(':checked') ? 'toggle="true" ' : '';
 
-              if (t === 'select' || t === 'checkbox-group') {
+              serialStr += '\n\t\t<field ' + fName + fLabel + fToggle + multiple + roles + desc + (maxLengthVal !== '' ? (maxLengthVal !== undefined ? maxLength : '') : '') + required + type + fSlash + '>';
+              if (multipleField) {
                 c = 1;
-                $('input[type=text][class=option]', $field).each(function() {
-                  if ($(this).attr('name') !== 'title') {
-                    var selected = $(this).prev().is(':checked') ? ' selected="true"' : '';
-                    serialStr += '\n\t\t\t<option' + selected + '>' + $(this).val() + '</option>';
-                  }
+                $('.sortable-options li', $field).each(function() {
+                  let $option = $(this),
+                    optionValue = 'value="' + $('.option-value', $option).val() + '"',
+                    optionLabel = $('.option-label', $option).val(),
+                    selected = $('.select-option', $option).is(':checked') ? ' selected="true"' : '';
+                  serialStr += '\n\t\t\t<option' + selected + ' ' + optionValue + '>' + optionLabel + '</option>';
                   c++;
                 });
                 serialStr += '\n\t\t</field>';

@@ -3,6 +3,7 @@
   var FormBuilder = function(element, options) {
 
     var defaults = {
+      dataType: 'json', // xml or json
       // Uneditable fields or other content you would like to
       // appear before and after regular fields.
       disableFields: {
@@ -90,7 +91,55 @@
 
     var startIndex,
       doCancel,
+      formData = new Map(),
       _helpers = {};
+
+
+
+
+
+
+    function Field(fieldData) {
+      this.elem = elem;
+
+    }
+
+    Field.prototype.json = () => {
+      var required = $('input.required', this).is(':checked') ? 'required="true" ' : 'required="false" ',
+        // multipleChecked = $('input[name="multiple"]', this).is(':checked'),
+        multiple = multipleChecked ? 'style="multiple" ' : '',
+        type = this.attr(opts.attributes[att]).replace(' form-field', ''),
+        multipleField = type.match(/(select|checkbox-group|radio-group)/),
+        fName = 'name="' + $('input.fld-name', this).val() + '" ',
+        fLabel = 'label="' + $('input.fld-label', this).val() + '" ',
+        roleVals = $.map($('input.roles-field:checked', this), function(n) {
+          return n.value;
+        }).join(','),
+        roles = (roleVals !== '' ? 'role="' + roleVals + '" ' : ''),
+        desc = $('input.fld-description', this).val(),
+        maxLengthVal = $('input.fld-max-length', $field).val(),
+        maxLength = 'max-length="' + (maxLengthVal !== undefined ? maxLengthVal : '') + '" ',
+        fSlash = (!multipleField ? '/' : '');
+
+      var fToggle = $('.checkbox-toggle', $field).is(':checked') ? 'toggle="true" ' : '';
+
+      serialStr += '\n\t\t<field ' + fName + fLabel + fToggle + multiple + roles + desc + (maxLengthVal !== '' ? (maxLengthVal !== undefined ? maxLength : '') : '') + required + type + fSlash + '>';
+      if (multipleField) {
+        c = 1;
+        $('.sortable-options li', $field).each(function() {
+          let $option = $(this),
+            optionValue = 'value="' + $('.option-value', $option).val() + '"',
+            optionLabel = $('.option-label', $option).val(),
+            selected = $('.select-option', $option).is(':checked') ? ' selected="true"' : '';
+          serialStr += '\n\t\t\t<option' + selected + ' ' + optionValue + '>' + optionLabel + '</option>';
+          c++;
+        });
+        serialStr += '\n\t\t</field>';
+      }
+    };
+
+
+
 
 
     /**
@@ -169,22 +218,29 @@
 
     // saves the field data to our canvas (elem)
     _helpers.save = function() {
-      $sortableFields.children('li').not('.disabled').each(function() {
-        _helpers.updatePreview($(this));
-      });
-      elem.val($sortableFields.toXML());
+
+      let $fields = $sortableFields.children('li.form-field').not('.disabled');
+
+      console.log(formData);
+
+      if ('xml' === opts.dataType) {
+        elem.val($sortableFields.toXML());
+      } else {
+        // var fieldJSON =
+
+      }
     };
 
     // updatePreview will generate the preview for radio and checkbox groups
     _helpers.updatePreview = function(field) {
       var preview;
 
-
       // $('.sortable-options li', field).each(function() {
       //   var option = $('.select-option', $(this))[0].outerHTML;
       //   var label = $('.option-label', $(this)).val();
       //   preview += option + ' ' + label + '<br/>';
       // });
+
       $('.prev-holder', field).html(preview);
     };
 
@@ -235,7 +291,7 @@
         }, 1000, function() {
           var targetID = $('.toggle-form', errors[0].field).attr('id');
           $('.toggle-form', errors[0].field).addClass('open').parent().next('.prev-holder').slideUp(250);
-          $('#' + targetID + '-fld').slideDown(250, function() {
+          $(document.getElementById(targetID + '-fld')).slideDown(250, function() {
             errors[0].attribute.addClass('error');
           });
         });
@@ -412,7 +468,7 @@
     // Setup the input fields
     var frmbFields = fieldTypes.map(function(elem) {
 
-      // be sure elem.ident is converted to camelCase to get label
+      // be sure elem.id is converted to camelCase to get label
       let fieldLabel = elem.id.toCamelCase(),
         idName = _helpers.nameAttr(elem.id),
         fieldData = {
@@ -647,12 +703,13 @@
 
 
       var liContent = _helpers.markup('div', {
-        id: 'frm-' + lastID + '-fld',
         'class': 'field-properties'
       }, fieldProperties(fieldData.properties));
 
       li = _helpers.markup('li', {
-        id: 'frm-' + lastID + '-item',
+        // id: 'frm-' + lastID + '-item',
+        id: _helpers.nameAttr(fieldData.attrs.type),
+        'data-type': fieldData.attrs.type,
         'class': fieldData.attrs.type + ' form-field'
       }, [fieldActions, fieldLabel, fieldPreview(fieldData), liContent]);
 
@@ -665,6 +722,9 @@
       $(document.getElementById('frm-' + lastID + '-item')).hide().slideDown(250);
 
       lastID++;
+
+      let curFieldData = JSON.stringify(fieldData);
+      formData.set(fieldData.attrs.id, curFieldData);
       _helpers.save();
     };
 
@@ -789,7 +849,7 @@
           textArea = `<textarea ${fieldAttrs}>${value}</textarea>`,
           fieldLabel = `<label for="${fieldData.attrs.id}">${fieldData.label}</label>`;
 
-          return fieldLabel + textArea;
+        return fieldLabel + textArea;
       };
 
       field.checkbox = function(fieldData) {
