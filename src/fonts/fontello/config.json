@@ -121,7 +121,7 @@
     },
     {
       "uid": "79af3bbd4c6264e7ef185843f6aff0fe",
-      "css": "hidden-input",
+      "css": "hidden",
       "code": 59403,
       "src": "custom_icons",
       "selected": true,
@@ -130,7 +130,7 @@
         "width": 1000
       },
       "search": [
-        "hidden-input"
+        "hidden"
       ]
     },
     {
