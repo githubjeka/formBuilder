@@ -29,6 +29,7 @@ const files = {
   ],
   formBuilder: {
     js: [
+      'src/js/helpers.js',
       'src/js/kc-toggle.js',
       'src/js/to-xml.js',
       'src/js/form-builder.js'
@@ -114,19 +115,36 @@ gulp.task('js', function() {
 
   return jsFiles.forEach(function(jsFileGlob, key) {
     let fileName = key.replace(/([A-Z])/g, function($1) {
-        return '-' + $1.toLowerCase();
-      }),
-      buildDate = new Date();
-    return gulp.src(jsFileGlob)
+      return '-' + $1.toLowerCase();
+    });
+
+    /**
+     * Demo scripts
+     */
+    gulp.src(jsFileGlob)
       .pipe(plugins.babel())
       .pipe(plugins.concat(fileName + '.js'))
       .pipe(banner())
-      .pipe(gulp.dest('demo/assets'))
+      .pipe(gulp.dest('demo/assets'));
+
+    gulp.src(jsFileGlob)
+      .pipe(plugins.sourcemaps.init())
+      .pipe(plugins.babel())
+      .pipe(plugins.concat(fileName + '.min.js'))
+      .pipe(plugins.uglify())
+      .pipe(banner())
+      .pipe(plugins.sourcemaps.write('/'))
+      .pipe(gulp.dest('demo/assets'));
+
+    return gulp.src(jsFileGlob)
+      .pipe(plugins.plumber())
+      .pipe(plugins.babel())
+      .pipe(plugins.concat(fileName + '.js'))
+      .pipe(banner())
       .pipe(gulp.dest('dist/'))
       .pipe(plugins.uglify())
       .pipe(banner())
       .pipe(plugins.concat(fileName + '.min.js'))
-      .pipe(gulp.dest('demo/assets'))
       .pipe(gulp.dest('dist/'))
       .pipe(bsync.reload({
         stream: true

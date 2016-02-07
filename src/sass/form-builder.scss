@@ -115,12 +115,15 @@ ul.frmb span.required {
 }
 
 .property-options-1 {
-  float: right;
-  width: calc(78% - 4px);
   background: #eee;
-  padding: 2%;
-  margin-right: 2px;
   border: 1px solid #afafab;
+  width: calc(80% - 4px);
+  padding: 2%;
+  margin-left: 16%;
+
+  input[type=checkbox] {
+    margin-right: 5px;
+  }
 
   .roles-wrap & {
     display: none;
@@ -371,16 +374,8 @@ textarea {
   padding: 0;
 }
 
-.ite-warning .ui-dialog-content {
-  padding: 0 15px 10px;
-}
-
 .ite-warning .ui-dialog-titlebar-close {
   display: none;
-}
-
-.ite-warning .ui-widget-header {
-  height: 15px;
 }
 
 .ite-warning {

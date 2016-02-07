@@ -29,6 +29,7 @@
         value: 1,
         label: 'Administrator'
       }],
+      saveUrl: false,
       showWarning: false,
       serializePrefix: 'frmb',
       labels: {
@@ -54,6 +55,7 @@
         fieldRemoveWarning: 'Are you sure you want to remove this field?',
         getStarted: 'Drag a field from the right to this area',
         hide: 'Edit',
+        id: 'ID',
         label: 'Label',
         labelEmpty: 'Field Label cannot be empty',
         limitRole: 'Limit access to one or more of the following roles:',
@@ -89,262 +91,28 @@
       }
     };
 
-    var startIndex,
-      doCancel,
-      formData = new Map(),
-      _helpers = {};
+
+    var opts = $.extend(true, defaults, options),
+      elem = $(element),
+      frmbID = 'frmb-' + $('ul[id^=frmb-]').length++;
 
 
+    opts.formID = frmbID;
 
+    var lastID = 1,
+      boxID = frmbID + '-control-box';
 
+    var UTIL = _helpers(opts);
+
+    var formData = new Map();
 
 
     function Field(fieldData) {
       this.elem = elem;
-
     }
 
     Field.prototype.json = () => {
-      var required = $('input.required', this).is(':checked') ? 'required="true" ' : 'required="false" ',
-        // multipleChecked = $('input[name="multiple"]', this).is(':checked'),
-        multiple = multipleChecked ? 'style="multiple" ' : '',
-        type = this.attr(opts.attributes[att]).replace(' form-field', ''),
-        multipleField = type.match(/(select|checkbox-group|radio-group)/),
-        fName = 'name="' + $('input.fld-name', this).val() + '" ',
-        fLabel = 'label="' + $('input.fld-label', this).val() + '" ',
-        roleVals = $.map($('input.roles-field:checked', this), function(n) {
-          return n.value;
-        }).join(','),
-        roles = (roleVals !== '' ? 'role="' + roleVals + '" ' : ''),
-        desc = $('input.fld-description', this).val(),
-        maxLengthVal = $('input.fld-max-length', $field).val(),
-        maxLength = 'max-length="' + (maxLengthVal !== undefined ? maxLengthVal : '') + '" ',
-        fSlash = (!multipleField ? '/' : '');
 
-      var fToggle = $('.checkbox-toggle', $field).is(':checked') ? 'toggle="true" ' : '';
-
-      serialStr += '\n\t\t<field ' + fName + fLabel + fToggle + multiple + roles + desc + (maxLengthVal !== '' ? (maxLengthVal !== undefined ? maxLength : '') : '') + required + type + fSlash + '>';
-      if (multipleField) {
-        c = 1;
-        $('.sortable-options li', $field).each(function() {
-          let $option = $(this),
-            optionValue = 'value="' + $('.option-value', $option).val() + '"',
-            optionLabel = $('.option-label', $option).val(),
-            selected = $('.select-option', $option).is(':checked') ? ' selected="true"' : '';
-          serialStr += '\n\t\t\t<option' + selected + ' ' + optionValue + '>' + optionLabel + '</option>';
-          c++;
-        });
-        serialStr += '\n\t\t</field>';
-      }
-    };
-
-
-
-
-
-    /**
-     * Remove duplicates from an array of elements
-     * @param  {array} arrArg array with possible duplicates
-     * @return {array}        array with only unique values
-     */
-    _helpers.uniqueArray = (arrArg) => {
-      return arrArg.filter((elem, pos, arr) => {
-        return arr.indexOf(elem) === pos;
-      });
-    };
-
-    /**
-     * Callback for when a drag begins
-     * @param  {object} event
-     * @param  {object} ui
-     */
-    _helpers.startMoving = function(event, ui) {
-      event = event;
-      ui.item.addClass('moving');
-      startIndex = $('li', this).index(ui.item);
-    };
-
-    /**
-     * Callback for when a drag ends
-     * @param  {object} event
-     * @param  {object} ui
-     */
-    _helpers.stopMoving = function(event, ui) {
-      event = event;
-      ui.item.removeClass('moving');
-      if (doCancel) {
-        $(ui.sender).sortable('cancel');
-        $(this).sortable('cancel');
-      }
-    };
-
-    /**
-     * Make strings safe to be used as classes
-     * @param  {string} str string to be converted
-     * @return {string}     converter string
-     */
-    _helpers.safename = function(str) {
-      return str.replace(/\s/g, '-').replace(/[^a-zA-Z0-9\-]/g, '').toLowerCase();
-    };
-
-
-    /**
-     * Strips non-numbers from a number only input
-     * @param  {string} str string with possible number
-     * @return {string}     string without numbers
-     */
-    _helpers.forceNumber = function(str) {
-      return str.replace(/[^0-9]/g, '');
-    };
-
-    /**
-     * [initTooltip description]
-     * @param  {[type]} tt [description]
-     * @return {[type]}    [description]
-     */
-    _helpers.initTooltip = function(tt) {
-      var tooltip = tt.find('.tooltip');
-      tt.mouseenter(function() {
-        if (tooltip.outerWidth() > 200) {
-          tooltip.addClass('max-width');
-        }
-        tooltip.css('left', tt.width() + 14);
-        tooltip.stop(true, true).fadeIn('fast');
-      }).mouseleave(function() {
-        tt.find('.tooltip').stop(true, true).fadeOut('fast');
-      });
-      tooltip.hide();
-    };
-
-    // saves the field data to our canvas (elem)
-    _helpers.save = function() {
-
-      let $fields = $sortableFields.children('li.form-field').not('.disabled');
-
-      console.log(formData);
-
-      if ('xml' === opts.dataType) {
-        elem.val($sortableFields.toXML());
-      } else {
-        // var fieldJSON =
-
-      }
-    };
-
-    // updatePreview will generate the preview for radio and checkbox groups
-    _helpers.updatePreview = function(field) {
-      var preview;
-
-      // $('.sortable-options li', field).each(function() {
-      //   var option = $('.select-option', $(this))[0].outerHTML;
-      //   var label = $('.option-label', $(this)).val();
-      //   preview += option + ' ' + label + '<br/>';
-      // });
-
-      $('.prev-holder', field).html(preview);
-    };
-
-
-    /**
-     * Generate unique name with epoch timestamp
-     * @param  {string} type eg. 'text'
-     * @return {string}      'text-1443885404543'
-     */
-    _helpers.nameAttr = function(type) {
-      var epoch = new Date().getTime();
-      return type + '-' + epoch;
-    };
-
-    _helpers.htmlEncode = function(value) {
-      return $('<div/>').text(value).html();
-    };
-
-    _helpers.htmlDecode = function(value) {
-      return $('<div/>').html(value).text();
-    };
-
-    /**
-     * Some basic validation before submitting our form to the backend
-     * @return {void}
-     */
-    _helpers.validateForm = function() {
-      var errors = [];
-      // check for empty field labels
-      $('input[name="label"], input[type="text"].option', $sortableFields).each(function() {
-        if ($(this).val() === '') {
-          var field = $(this).parents('li.form-field'),
-            fieldAttr = $(this);
-
-          errors.push({
-            field: field,
-            error: opts.labels.labelEmpty,
-            attribute: fieldAttr
-          });
-        }
-      });
-
-      // @todo add error = { noVal: opts.labels.labelEmpty }
-      if (errors.length) {
-        alert('Error: ' + errors[0].error);
-        $('html, body').animate({
-          scrollTop: errors[0].field.offset().top
-        }, 1000, function() {
-          var targetID = $('.toggle-form', errors[0].field).attr('id');
-          $('.toggle-form', errors[0].field).addClass('open').parent().next('.prev-holder').slideUp(250);
-          $(document.getElementById(targetID + '-fld')).slideDown(250, function() {
-            errors[0].attribute.addClass('error');
-          });
-        });
-      }
-    };
-
-    /**
-     * Display a custom tooltip for disabled fields.
-     * @param  {object} field [description]
-     * @return {void}
-     */
-    _helpers.disabledTT = function(field) {
-      var title = field.attr('data-tooltip');
-      if (title) {
-        field.removeAttr('title').data('tip_text', title);
-        var tt = $('<p/>', {
-          'class': 'frmb-tt'
-        }).html(title);
-        field.append(tt);
-        tt.css({
-          top: -tt.outerHeight(),
-          left: -15
-        });
-        field.mouseleave(function() {
-          $(this).attr('data-tooltip', field.data('tip_text'));
-          $('.frmb-tt').remove();
-        });
-      }
-    };
-
-    /**
-     * Convert hyphenated strings to camelCase
-     * @return {string}
-     */
-    String.prototype.toCamelCase = function() {
-      return this.replace(/(\-\w)/g, function(matches) {
-        return matches[1].toUpperCase();
-      });
-    };
-
-    /**
-     * Generate markup wrapper where needed
-     * @param  {string} type
-     * @param  {object} attrs
-     * @param  {string} content we wrap this
-     * @return {string}
-     */
-    _helpers.markup = function(type, attrs = {}, content = '') {
-      attrs = attrString(attrs);
-      content = Array.isArray(content) ? content.join('') : content;
-      let inlineElems = ['input'],
-        template = inlineElems.indexOf(type) === -1 ? `<${type} ${attrs}>${content}</${type}>` : `<${type} ${attrs}/>`;
-      return template;
     };
 
 
@@ -354,25 +122,24 @@
      * @return {array}            an array of property objects
      */
     var prepProperties = function(fieldData) {
-      var properties = Object.assign({}, {
-          label: fieldData.label
-        }, fieldData.attrs, fieldData.meta),
-        availableRoles = properties.roles.map(function(elem) {
+      var properties = Object.assign({}, fieldData);
+
+      var availableRoles = properties.meta.roles.map(function(elem) {
           elem.type = 'checkbox';
           return elem;
         }),
         sortedProperties,
         defaultOrder = ['required', 'label', 'description', 'class', 'roles', 'name'];
 
-      properties.name = properties.name || _helpers.nameAttr(properties.type);
+      properties.name = properties.attrs.name || UTIL.nameAttr(properties.attrs.type);
 
       // if field type is not checkbox, checkbox/radio group or select list, add max length
-      if ($.inArray(properties.type, ['checkbox', 'select', 'checkbox-group', 'date', 'autocomplete']) === -1 && !properties.maxLength) {
-        properties.maxLength = '';
+      if ($.inArray(properties.type, ['checkbox', 'select', 'checkbox-group', 'date', 'autocomplete']) === -1 && !properties.attrs.maxLength) {
+        properties.attrs.maxLength = '';
         defaultOrder.push('maxLength');
       }
 
-      properties.roles = {
+      properties.meta.roles = {
         options: availableRoles,
         value: 1,
         type: 'checkbox'
@@ -408,30 +175,40 @@
         };
       }
 
-      delete properties.type;
+      delete properties.attrs.type;
 
-      sortedProperties = _helpers.uniqueArray(defaultOrder.concat(Object.keys(properties))).map(function(elem) {
-        let property = {
-          name: elem
-        };
-        if (typeof properties[elem] === 'object') {
-          Object.assign(property, properties[elem]);
-        } else {
-          property.value = properties[elem];
+      for (var prop in properties) {
+        if (properties.hasOwnProperty(prop)) {
+          properties[prop] = sortProperties(defaultOrder, prop);
         }
-        return property;
-      });
+      }
 
-      return sortedProperties;
+
+      return fieldProperties;
+    };
+
+    var sortProperties = function(order, properties) {
+      let sortedProps = [];
+      if (Array.isArray(properties)) {
+        sortedProps = UTIL.uniqueArray(order.concat(Object.keys(properties))).map(function(elem) {
+          let property = {
+            name: elem
+          };
+          if (typeof properties[elem] === 'object') {
+            Object.assign(property, properties[elem]);
+          } else {
+            property.value = properties[elem];
+          }
+          return property;
+        });
+      } else {
+        sortedProps.push(properties);
+      }
+
+      return sortedProps;
     };
 
 
-    var opts = $.extend(defaults, options),
-      elem = $(element),
-      frmbID = 'frmb-' + $('ul[id^=frmb-]').length++;
-
-    var lastID = 1,
-      boxID = frmbID + '-control-box';
 
     var fieldTypes = [{
       id: 'text',
@@ -470,7 +247,7 @@
 
       // be sure elem.id is converted to camelCase to get label
       let fieldLabel = elem.id.toCamelCase(),
-        idName = _helpers.nameAttr(elem.id),
+        idName = UTIL.nameAttr(elem.id),
         fieldData = {
           label: opts.labels[fieldLabel],
           meta: {
@@ -499,7 +276,6 @@
       }
 
       fieldData.properties = prepProperties(fieldData);
-
 
       return $('<li/>', fieldData.attrs).data('fieldData', fieldData).html(fieldData.label).removeAttr('type');
     });
@@ -562,13 +338,13 @@
         event = event;
         var lastIndex = $('> li', $sortableFields).length - 1,
           curIndex = ui.placeholder.index();
-        doCancel = ((curIndex <= 1) || (curIndex === lastIndex));
+        UTIL.doCancel = ((curIndex <= 1) || (curIndex === lastIndex));
       },
       over: function(event) {
         $(event.target).parent().addClass('active');
       },
-      start: _helpers.startMoving,
-      stop: _helpers.stopMoving,
+      start: UTIL.startDrag,
+      stop: UTIL.stopDrag,
       cancel: 'input, .disabled, .sortable-options, .add, .btn, .no-drag, .prev-holder select',
       placeholder: 'frmb-placeholder'
     });
@@ -580,14 +356,14 @@
       connectWith: $sortableFields,
       cursor: 'move',
       placeholder: 'ui-state-highlight',
-      start: _helpers.startMoving,
-      stop: _helpers.stopMoving,
+      start: UTIL.startDrag,
+      stop: UTIL.stopDrag,
       revert: 150,
       remove: function(event, ui) {
-        if (startIndex === 0) {
+        if (UTIL.startIndex === 0) {
           cbUL.prepend(ui.item);
         } else {
-          $('li:eq(' + (startIndex - 1) + ')', cbUL).after(ui.item);
+          $('li:eq(' + (UTIL.startIndex - 1) + ')', cbUL).after(ui.item);
         }
       },
       update: function(event, ui) {
@@ -624,7 +400,7 @@
         if ($(this).name === 'label' && $(this).val() === '') {
           return alert('Error: ' + opts.labels.labelEmpty);
         }
-        _helpers.save();
+        UTIL.save();
       }
     };
 
@@ -677,38 +453,37 @@
      */
     var appendField = function(fieldData) {
       var li = '',
-        delBtn = _helpers.markup('a', {
+        delBtn = UTIL.markup('a', {
           'class': 'del-button btn',
           title: opts.labels.removeMessage,
           id: 'del_' + lastID
         }, opts.labels.remove),
-        toggleBtn = _helpers.markup('a', {
+        toggleBtn = UTIL.markup('a', {
           id: 'frm-' + lastID,
           'class': 'toggle-form btn icon-pencil',
           title: opts.labels.hide
         }),
-        required = _helpers.markup('span', {
+        required = UTIL.markup('span', {
           'class': 'required-asterisk'
         }, '*'),
-        tooltip = (fieldData.description ? _helpers.markup('span', {
+        tooltip = (fieldData.description ? UTIL.markup('span', {
           'class': 'tooltip-element',
           tooltip: fieldData.description
         }, '?') : ''),
-        fieldLabel = _helpers.markup('div', {
+        fieldLabel = UTIL.markup('div', {
           'class': 'field-label'
-        }, fieldData.label, required, tooltip),
-        fieldActions = _helpers.markup('div', {
+        }, [fieldData.label, required, tooltip]),
+        fieldActions = UTIL.markup('div', {
           'class': 'field-actions'
         }, [toggleBtn, delBtn]);
 
-
-      var liContent = _helpers.markup('div', {
+      var liContent = UTIL.markup('div', {
         'class': 'field-properties'
-      }, fieldProperties(fieldData.properties));
+      }, fieldSettings(fieldData));
 
-      li = _helpers.markup('li', {
+      li = UTIL.markup('li', {
         // id: 'frm-' + lastID + '-item',
-        id: _helpers.nameAttr(fieldData.attrs.type),
+        id: UTIL.nameAttr(fieldData.attrs.type),
         'data-type': fieldData.attrs.type,
         'class': fieldData.attrs.type + ' form-field'
       }, [fieldActions, fieldLabel, fieldPreview(fieldData), liContent]);
@@ -725,22 +500,15 @@
 
       let curFieldData = JSON.stringify(fieldData);
       formData.set(fieldData.attrs.id, curFieldData);
-      _helpers.save();
+      UTIL.save();
     };
 
-    /**
-     * Takes and object of attributes and converts them to string
-     * @param  {object} attrs
-     * @return {string}
-     */
-    var attrString = function(attrs) {
-      var attributes = [];
-      for (var attr in attrs) {
-        if (attrs.hasOwnProperty(attr)) {
-          attributes.push(attr + '="' + attrs[attr] + '"');
-        }
-      }
-      return attributes.join(' ');
+    var fieldSettings = function(fieldData) {
+      let markup = [],
+        propertyMarkup = fieldProperties(fieldData.properties).join('');
+      markup.push(propertyMarkup);
+
+      return markup.join('');
     };
 
     /**
@@ -750,7 +518,7 @@
      */
     var fieldProperties = function(properties) {
       return properties.map(function(property) {
-        let field = _helpers.markup('div', {
+        let field = UTIL.markup('div', {
           'class': `field-property ${property.name}-wrap`
         }, fieldSetting(property));
         return field;
@@ -766,13 +534,17 @@
         value = property.value || '',
         setting = [];
 
+      if (name === 'required') {
+        type = 'checkbox';
+      }
+
       if (property.options) {
         depth++;
         fields = property.options.map(function(val) {
           return fieldSetting(val, depth);
         });
 
-        fields = _helpers.markup('div', {
+        fields = UTIL.markup('div', {
           'class': 'property-options-' + depth
         }, fields);
       }
@@ -795,11 +567,11 @@
           }, 1000);
         }
 
-        setting.push(_helpers.markup('input', attrs));
+        setting.push(UTIL.markup('input', attrs));
       }
 
       if (label) {
-        setting.push(_helpers.markup('label', {
+        setting.push(UTIL.markup('label', {
           'for': propertyId
         }, label));
       }
@@ -822,7 +594,7 @@
         type = fieldData.attrs.type.toCamelCase();
 
       field.text = function(fieldData) {
-        let fieldAttrs = attrString(fieldData.attrs),
+        let fieldAttrs = UTIL.attrString(fieldData.attrs),
           field = `<input ${fieldAttrs}>`,
           value = fieldData.attrs.value || '',
           fieldLabel = `<label for="${fieldData.attrs.id}">${fieldData.label}</label>`,
@@ -844,7 +616,7 @@
 
 
       field.textarea = function(fieldData) {
-        let fieldAttrs = attrString(fieldData.attrs),
+        let fieldAttrs = UTIL.attrString(fieldData.attrs),
           value = fieldData.attrs.value || '',
           textArea = `<textarea ${fieldAttrs}>${value}</textarea>`,
           fieldLabel = `<label for="${fieldData.attrs.id}">${fieldData.label}</label>`;
@@ -853,7 +625,7 @@
       };
 
       field.checkbox = function(fieldData) {
-        let fieldAttrs = attrString(fieldData.attrs);
+        let fieldAttrs = UTIL.attrString(fieldData.attrs);
         return `<label for="${fieldData.attrs.id}"><input ${fieldAttrs}> ${fieldData.label}</label>`;
       };
 
@@ -911,8 +683,9 @@
     // toggle fields
     $sortableFields.on('click', '.toggle-form', function(e) {
       e.preventDefault();
-      var $field = document.getElementById($(this).attr('id') + '-item');
-      $('.prev-holder', $field).toggleClass('open').slideToggle(250);
+      var $field = $(this).parents('.form-field:eq(0)');
+      $field.toggleClass('editing');
+      $('.prev-holder', $field).slideToggle(250);
       $('.field-properties', $field).slideToggle(250, function() {
         // do something after attr toggle
       });
@@ -935,7 +708,7 @@
         if (!closestToolTip.length) {
           var tt = '<span class="tooltip-element" tooltip="' + $(this).val() + '">?</span>';
           $('.field-label', $(this).closest('li')).append(tt);
-          // _helpers.initTooltip(tt);
+          // UTIL.initTooltip(tt);
         } else {
           closestToolTip.attr('tooltip', $(this).val()).css('display', 'inline-block');
         }
@@ -948,7 +721,7 @@
 
     // format name attribute
     $sortableFields.on('keyup', '.edit-name', function() {
-      $(this).val(_helpers.safename($(this).val()));
+      $(this).val(UTIL.safename($(this).val()));
       if ($(this).val() === '') {
         $(this).addClass('field_error').attr('placeholder', opts.labels.cannotBeEmpty);
       } else {
@@ -957,7 +730,7 @@
     });
 
     $sortableFields.on('keyup', 'input.fld-max-length', function() {
-      $(this).val(_helpers.forceNumber($(this).val()));
+      $(this).val(UTIL.forceNumber($(this).val()));
     });
 
     // Delete field
@@ -970,21 +743,21 @@
         // double check that the user really wants to remove the field
         showRemoveWarning($field);
       } else {
-        _helpers.removeField($field);
+        UTIL.removeField($field);
       }
     });
 
     var showRemoveWarning = function($field) {
-      var fieldWarnH3 = $('<h3/>').html('<span></span>' + opts.labels.warning);
-      $('<div />').append(fieldWarnH3, opts.labels.fieldRemoveWarning).dialog({
+      $('<div />', {
+        title: opts.labels.warning
+      }).append(opts.labels.fieldRemoveWarning).dialog({
         modal: true,
         resizable: false,
-        width: 300,
         dialogClass: 'ite-warning',
         buttons: [{
           text: opts.labels.yes,
           click: function() {
-            _helpers.removeField($field);
+            UTIL.removeField($field);
             $(this).dialog('close');
           }
         }, {
@@ -993,14 +766,7 @@
             $(this).dialog('close');
           }
         }]
-      });
-    };
-
-    _helpers.removeField = function($field) {
-      $field.slideUp(250, function() {
-        $(this).remove();
-        _helpers.save();
-      });
+      }, opts.labels.warning);
     };
 
     // Attach a callback to toggle required asterisk
@@ -1021,7 +787,7 @@
     });
 
     $sortableFields.on('mouseenter', 'li.disabled .form-element', function() {
-      _helpers.disabledTT($(this));
+      UTIL.disabledTT($(this));
     });
 
     // Attach a callback to close link
@@ -1059,7 +825,7 @@
       if (window.confirm(opts.labels.clearAllMessage)) {
         $sortableFields.empty();
         elem.val('');
-        _helpers.save();
+        UTIL.save();
         elem.getTemplate();
       }
     });
@@ -1072,9 +838,9 @@
     $(document.getElementById(frmbID + '-save')).click(function(e) {
       e.preventDefault();
       if (!$formWrap.hasClass('edit-xml')) {
-        _helpers.save();
+        UTIL.save();
       }
-      _helpers.validateForm(e);
+      UTIL.validateForm(e);
     });
 
 
