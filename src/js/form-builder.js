@@ -129,9 +129,16 @@
           return elem;
         }),
         sortedProperties,
-        defaultOrder = ['required', 'label', 'description', 'class', 'roles', 'name'];
+        defaultOrder = {
+          meta: ['label', 'description', 'roles'],
+          attrs: ['class', 'required', 'name']
+        };
 
       properties.name = properties.attrs.name || UTIL.nameAttr(properties.attrs.type);
+
+
+      console.log(properties);
+
 
       // if field type is not checkbox, checkbox/radio group or select list, add max length
       if ($.inArray(properties.type, ['checkbox', 'select', 'checkbox-group', 'date', 'autocomplete']) === -1 && !properties.attrs.maxLength) {
@@ -249,10 +256,10 @@
       let fieldLabel = elem.id.toCamelCase(),
         idName = UTIL.nameAttr(elem.id),
         fieldData = {
-          label: opts.labels[fieldLabel],
           meta: {
             description: '',
-            roles: opts.roles
+            roles: opts.roles,
+            label: opts.labels[fieldLabel]
           },
           attrs: {
             type: elem.id,
