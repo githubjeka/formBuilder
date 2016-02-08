@@ -517,13 +517,16 @@
      */
     var fieldProperties = function(order, properties) {
       return order.map(function(property) {
-      console.log(property, properties[property]);
-        let field = UTIL.markup('div', {
-          'class': `field-property ${property}-wrap`
-        }, fieldSetting(properties[property]));
+      console.log(properties[property]);
+      // let fieldMarkup = fieldSetting(properties[property]);
+      //   let field = UTIL.markup('div', {
+      //     'class': `field-property ${property}-wrap`
+      //   }, fieldMarkup);
         return field;
       });
     };
+
+
 
     var fieldSetting = function(property, depth = 0) {
       var name = property.name || '',

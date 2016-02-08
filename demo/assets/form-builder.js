@@ -511,15 +511,15 @@ var _helpers = function _helpers(opts) {
           };
           for (var prop in elem) {
             if (elem.hasOwnProperty(prop)) {
-              var field = {
+              var _field = {
                 value: elem[prop],
                 label: prop,
                 name: 'option-' + prop
               };
               if ('selected' === prop) {
-                field.type = 'checkbox';
+                _field.type = 'checkbox';
               }
-              option.options.push(field);
+              option.options.push(_field);
             }
           }
           return option;
@@ -866,10 +866,11 @@ var _helpers = function _helpers(opts) {
      */
     var fieldProperties = function fieldProperties(order, properties) {
       return order.map(function (property) {
-        console.log(property, properties[property]);
-        var field = UTIL.markup('div', {
-          'class': 'field-property ' + property + '-wrap'
-        }, fieldSetting(properties[property]));
+        console.log(properties[property]);
+        // let fieldMarkup = fieldSetting(properties[property]);
+        //   let field = UTIL.markup('div', {
+        //     'class': `field-property ${property}-wrap`
+        //   }, fieldMarkup);
         return field;
       });
     };
