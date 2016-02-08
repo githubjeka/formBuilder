@@ -621,9 +621,9 @@ var _helpers = function _helpers(opts) {
         }];
       }
 
-      fieldData.properties = prepProperties(fieldData);
+      fieldData = prepProperties(fieldData);
 
-      return $('<li/>', fieldData.attrs).data('fieldProperties', fieldData.properties).data('fieldData', fieldData).html(fieldData.meta.label).removeAttr('type');
+      return $('<li/>', fieldData.attrs).data('fieldData', fieldData).html(fieldData.meta.label).removeAttr('type');
     });
 
     cbUL.append(frmbFields);
@@ -868,8 +868,6 @@ var _helpers = function _helpers(opts) {
       // console.log(order, properties);
       return order.map(function (property) {
 
-        console.log(property);
-
         var fieldMarkup = fieldSetting(properties[property]);
         var field = UTIL.markup('div', {
           'class': 'field-property ' + property + '-wrap'
@@ -878,18 +876,10 @@ var _helpers = function _helpers(opts) {
       });
     };
 
-    // var propMap = function(prop) {
-    //   var propertyMap = new Map(),
-    //     name = {
-    //       label:
-    //     };
-
-    //   propertyMap.set(name, "value associated with keyFunc");
-
-    //   let property = {
-
-    //   };
-    // };
+    var propMap = function propMap(prop) {
+      var settings = $.extend({}, defaults, options);
+      var propertyMap = new Map();
+    };
 
     var fieldSetting = function fieldSetting(property) {
       var depth = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];
