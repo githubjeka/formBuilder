@@ -511,15 +511,15 @@ var _helpers = function _helpers(opts) {
           };
           for (var prop in elem) {
             if (elem.hasOwnProperty(prop)) {
-              var _field = {
+              var field = {
                 value: elem[prop],
                 label: prop,
                 name: 'option-' + prop
               };
               if ('selected' === prop) {
-                _field.type = 'checkbox';
+                field.type = 'checkbox';
               }
-              option.options.push(_field);
+              option.options.push(field);
             }
           }
           return option;
@@ -623,7 +623,7 @@ var _helpers = function _helpers(opts) {
 
       fieldData.properties = prepProperties(fieldData);
 
-      return $('<li/>', fieldData.attrs).data('fieldData', fieldData).html(fieldData.meta.label).removeAttr('type');
+      return $('<li/>', fieldData.attrs).data('fieldProperties', fieldData.properties).data('fieldData', fieldData).html(fieldData.meta.label).removeAttr('type');
     });
 
     cbUL.append(frmbFields);
@@ -865,15 +865,31 @@ var _helpers = function _helpers(opts) {
      * @return {string}        markup for advanced fields
      */
     var fieldProperties = function fieldProperties(order, properties) {
+      // console.log(order, properties);
       return order.map(function (property) {
-        console.log(properties[property]);
-        // let fieldMarkup = fieldSetting(properties[property]);
-        //   let field = UTIL.markup('div', {
-        //     'class': `field-property ${property}-wrap`
-        //   }, fieldMarkup);
+
+        console.log(property);
+
+        var fieldMarkup = fieldSetting(properties[property]);
+        var field = UTIL.markup('div', {
+          'class': 'field-property ' + property + '-wrap'
+        }, fieldMarkup);
         return field;
       });
     };
+
+    // var propMap = function(prop) {
+    //   var propertyMap = new Map(),
+    //     name = {
+    //       label:
+    //     };
+
+    //   propertyMap.set(name, "value associated with keyFunc");
+
+    //   let property = {
+
+    //   };
+    // };
 
     var fieldSetting = function fieldSetting(property) {
       var depth = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];

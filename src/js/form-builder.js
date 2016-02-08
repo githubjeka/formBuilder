@@ -270,7 +270,11 @@
 
       fieldData.properties = prepProperties(fieldData);
 
-      return $('<li/>', fieldData.attrs).data('fieldData', fieldData).html(fieldData.meta.label).removeAttr('type');
+      return $('<li/>', fieldData.attrs)
+        .data('fieldProperties', fieldData.properties)
+        .data('fieldData', fieldData)
+        .html(fieldData.meta.label)
+        .removeAttr('type');
     });
 
     cbUL.append(frmbFields);
@@ -516,16 +520,24 @@
      * @return {string}        markup for advanced fields
      */
     var fieldProperties = function(order, properties) {
+      // console.log(order, properties);
       return order.map(function(property) {
-      console.log(properties[property]);
-      // let fieldMarkup = fieldSetting(properties[property]);
-      //   let field = UTIL.markup('div', {
-      //     'class': `field-property ${property}-wrap`
-      //   }, fieldMarkup);
+
+        console.log(property);
+
+        let fieldMarkup = fieldSetting(properties[property]);
+        let field = UTIL.markup('div', {
+          'class': `field-property ${property}-wrap`
+        }, fieldMarkup);
         return field;
       });
     };
 
+    var propMap = function(prop) {
+      var settings = $.extend({}, defaults, options);
+      var propertyMap = new Map();
+
+    };
 
 
     var fieldSetting = function(property, depth = 0) {
