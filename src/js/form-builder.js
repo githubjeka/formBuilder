@@ -99,10 +99,11 @@
 
     opts.formID = frmbID;
 
-    var lastID = 1,
-      boxID = frmbID + '-control-box';
 
     var UTIL = _helpers(opts);
+    UTIL.lastID = 1;
+
+    var boxID = frmbID + '-control-box';
 
     var formData = new Map();
 
@@ -116,103 +117,15 @@
     };
 
 
-    /**
-     * Prepare the properties for the field so they can be generated and edited later on.
-     * @param  {object} fieldData
-     * @return {array}            an array of property objects
-     */
-    var prepProperties = function(fieldData) {
-      var properties = Object.assign({}, fieldData);
-
-      var availableRoles = properties.meta.roles.map(function(elem) {
-          elem.type = 'checkbox';
-          return elem;
-        }),
-        sortedProperties,
-        defaultOrder = {
-          meta: ['label', 'description', 'roles'],
-          attrs: ['class', 'required', 'name']
-        };
-
-      properties.name = properties.attrs.name || UTIL.nameAttr(properties.attrs.type);
-
-
-      console.log(properties);
-
-
-      // if field type is not checkbox, checkbox/radio group or select list, add max length
-      if ($.inArray(properties.type, ['checkbox', 'select', 'checkbox-group', 'date', 'autocomplete']) === -1 && !properties.attrs.maxLength) {
-        properties.attrs.maxLength = '';
-        defaultOrder.push('maxLength');
-      }
-
-      properties.meta.roles = {
-        options: availableRoles,
-        value: 1,
-        type: 'checkbox'
-      };
-
-      // options need a field for value, label and checkbox to select
-      if (fieldData.options) {
-        let optionFields = fieldData.options.map(function(elem, index) {
-          let option = {
-            options: [],
-            type: 'none'
-          };
-          for (var prop in elem) {
-            if (elem.hasOwnProperty(prop)) {
-              let field = {
-                value: elem[prop],
-                label: prop,
-                name: 'option-' + prop
-              };
-              if ('selected' === prop) {
-                field.type = 'checkbox';
-              }
-              option.options.push(field);
-            }
-          }
-          return option;
-        });
-
-        properties.options = {
-          options: optionFields,
-          label: opts.labels.options,
-          type: 'none'
-        };
-      }
-
-      delete properties.attrs.type;
-
-      for (var prop in properties) {
-        if (properties.hasOwnProperty(prop)) {
-          properties[prop] = sortProperties(defaultOrder, prop);
+    var sortProperties = function(order, fieldData) {
+      for (var prop in fieldData) {
+        if (fieldData.hasOwnProperty(prop)) {
+          order = UTIL.uniqueArray(order.concat(Object.keys(fieldData))).map(function(elem) {
+            return elem;
+          });
         }
       }
-
-
-      return fieldProperties;
-    };
-
-    var sortProperties = function(order, properties) {
-      let sortedProps = [];
-      if (Array.isArray(properties)) {
-        sortedProps = UTIL.uniqueArray(order.concat(Object.keys(properties))).map(function(elem) {
-          let property = {
-            name: elem
-          };
-          if (typeof properties[elem] === 'object') {
-            Object.assign(property, properties[elem]);
-          } else {
-            property.value = properties[elem];
-          }
-          return property;
-        });
-      } else {
-        sortedProps.push(properties);
-      }
-
-      return sortedProps;
+      return order;
     };
 
 
@@ -282,9 +195,12 @@
         }];
       }
 
-      fieldData.properties = prepProperties(fieldData);
+      fieldData.property = new Properties(UTIL, opts, fieldData);
 
-      return $('<li/>', fieldData.attrs).data('fieldData', fieldData).html(fieldData.label).removeAttr('type');
+      return $('<li/>', fieldData.attrs)
+        .data('fieldData', fieldData)
+        .html(fieldData.meta.label)
+        .removeAttr('type');
     });
 
     cbUL.append(frmbFields);
@@ -463,10 +379,10 @@
         delBtn = UTIL.markup('a', {
           'class': 'del-button btn',
           title: opts.labels.removeMessage,
-          id: 'del_' + lastID
+          id: 'del_' + UTIL.lastID
         }, opts.labels.remove),
         toggleBtn = UTIL.markup('a', {
-          id: 'frm-' + lastID,
+          id: 'frm-' + UTIL.lastID,
           'class': 'toggle-form btn icon-pencil',
           title: opts.labels.hide
         }),
@@ -489,7 +405,7 @@
       }, fieldSettings(fieldData));
 
       li = UTIL.markup('li', {
-        // id: 'frm-' + lastID + '-item',
+        // id: 'frm-' + UTIL.lastID + '-item',
         id: UTIL.nameAttr(fieldData.attrs.type),
         'data-type': fieldData.attrs.type,
         'class': fieldData.attrs.type + ' form-field'
@@ -501,19 +417,25 @@
         $sortableFields.append(li);
       }
 
-      $(document.getElementById('frm-' + lastID + '-item')).hide().slideDown(250);
+      $(document.getElementById('frm-' + UTIL.lastID + '-item')).hide().slideDown(250);
 
-      lastID++;
+      UTIL.lastID++;
 
-      let curFieldData = JSON.stringify(fieldData);
-      formData.set(fieldData.attrs.id, curFieldData);
+      // let curFieldData = JSON.stringify(fieldData);
+      // formData.set(fieldData.attrs.id, curFieldData);
       UTIL.save();
     };
 
     var fieldSettings = function(fieldData) {
       let markup = [],
-        propertyMarkup = fieldProperties(fieldData.properties).join('');
-      markup.push(propertyMarkup);
+        propOrder = fieldData.propOrder,
+        propertyMarkup;
+      for (var section in propOrder) {
+        if (fieldData.hasOwnProperty(section)) {
+          propertyMarkup = fieldProperties(propOrder[section], fieldData[section]).join('');
+          markup.push(propertyMarkup);
+        }
+      }
 
       return markup.join('');
     };
@@ -523,18 +445,21 @@
      * @param  {object} fieldData configuration object for field
      * @return {string}        markup for advanced fields
      */
-    var fieldProperties = function(properties) {
-      return properties.map(function(property) {
+    var fieldProperties = function(order, properties) {
+      // console.log(order, properties);
+      return order.map(function(property) {
+
+        let fieldMarkup = fieldSetting(properties[property]);
         let field = UTIL.markup('div', {
-          'class': `field-property ${property.name}-wrap`
-        }, fieldSetting(property));
+          'class': `field-property ${property}-wrap`
+        }, fieldMarkup);
         return field;
       });
     };
 
     var fieldSetting = function(property, depth = 0) {
       var name = property.name || '',
-        propertyId = (name + '-' + lastID).replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase(),
+        propertyId = (name + '-' + UTIL.lastID).replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase(),
         label = property.label || opts.labels[name.toCamelCase()] || false,
         fields = property.fields || [],
         type = property.type || 'text',
@@ -570,7 +495,7 @@
           attrs.placeholder = label.charAt(0).toUpperCase() + label.slice(1);
         } else if (depth === 1) {
           setTimeout(function() {
-            $('.property-options-1', document.getElementById('frm-' + lastID + '-item')).sortable();
+            $('.property-options-1', document.getElementById('frm-' + UTIL.lastID + '-item')).sortable();
           }, 1000);
         }
 
@@ -923,12 +848,19 @@
   $.fn.formBuilder = function(options) {
     var form = this;
     return form.each(function() {
-      var element = $(this);
+      var element = $(this),
+        formBuilder;
       if (element.data('formBuilder')) {
-        return;
+        var existingFormBuilder = element.parents('.form-builder:eq(0)');
+        var newElement = element.clone();
+        existingFormBuilder.before(newElement);
+        existingFormBuilder.remove();
+        formBuilder = new FormBuilder(newElement, options);
+        newElement.data('formBuilder', formBuilder);
+      } else {
+        formBuilder = new FormBuilder(form, options);
+        element.data('formBuilder', formBuilder);
       }
-      var formBuilder = new FormBuilder(this, options);
-      element.data('formBuilder', formBuilder);
     });
   };
 

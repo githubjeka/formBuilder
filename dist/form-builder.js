@@ -246,6 +246,127 @@ var _helpers = function _helpers(opts) {
 };
 'use strict';
 
+var Properties = function Properties(UTIL, opts, fieldData) {
+  'use strict';
+
+  var properties = this,
+      _utils = {};
+
+  properties.order = {
+    meta: ['label', 'description', 'roles'],
+    attrs: ['required', 'name', 'class']
+  };
+
+  properties.roles = function () {
+    var roles = {
+      value: 1,
+      type: 'checkbox'
+    };
+
+    roles.options = fieldData.meta.roles.map(function (elem) {
+      elem.type = 'checkbox';
+      return elem;
+    });
+  };
+
+  // if field type is not checkbox, checkbox/radio group or select list, add max length
+  if ($.inArray(fieldData.type, ['checkbox', 'select', 'checkbox-group', 'date', 'autocomplete']) === -1 && !fieldData.attrs.maxLength) {
+    fieldData.attrs.maxLength = '';
+    properties.order.attrs.push('maxLength');
+  }
+
+  // options need a field for value, label and checkbox to select
+  if (fieldData.options) {
+    var optionFields = fieldData.options.map(function (elem, index) {
+      var option = {
+        options: [],
+        type: 'none'
+      };
+      for (var prop in elem) {
+        if (elem.hasOwnProperty(prop)) {
+          var field = {
+            value: elem[prop],
+            label: prop,
+            name: 'option-' + prop
+          };
+          if ('selected' === prop) {
+            field.type = 'checkbox';
+          }
+          option.options.push(field);
+        }
+      }
+      return option;
+    });
+
+    fieldData.options = {
+      options: optionFields,
+      label: opts.labels.options,
+      type: 'none'
+    };
+  }
+
+  _utils.field = function (propName, propValue) {
+    var defaultProp = {
+      name: UTIL.nameAttr(propName),
+      id: (propName + '-' + UTIL.lastID).replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase(),
+      label: opts.labels[name.toCamelCase()],
+      fields: [],
+      type: _utils.propMap('type', propName),
+      value: ''
+    },
+        property = undefined;
+    if (typeof propValue === 'object') {
+      property = $.extend(defaultProp, propValue);
+    } else {
+      property = $.extend({}, defaultProp);
+    }
+
+    return property;
+  };
+
+  _utils.propMap = function (type, name) {
+    var propMap = new Map(),
+        propType = {
+      required: 'checkbox',
+      roles: 'checkbox'
+    };
+    propMap.set('type', propType);
+
+    return propMap.get(type)[name] || 'text';
+  };
+
+  _utils.fields = (function getFields(_x) {
+    var _again = true;
+
+    _function: while (_again) {
+      var fieldData = _x;
+      _again = false;
+
+      fieldData.fields = {};
+
+      for (var prop in fieldData) {
+        if (fieldData.hasOwnProperty(prop)) {
+          fieldData.fields[prop] = [];
+          if (typeof fieldData[prop] === 'object') {
+            _x = fieldData[prop];
+            _again = true;
+            prop = undefined;
+            continue _function;
+          } else {
+            var field = _utils.field(prop, fieldData[prop]);
+            fieldData.fields[prop].push(field);
+          }
+        }
+      }
+
+      return fieldData.fields;
+    }
+  })(fieldData);
+
+  return properties;
+};
+'use strict';
+
 (function ($) {
   'use strict';
 
@@ -459,10 +580,10 @@ var _helpers = function _helpers(opts) {
 
     opts.formID = frmbID;
 
-    var lastID = 1,
-        boxID = frmbID + '-control-box';
-
     var UTIL = _helpers(opts);
+    UTIL.lastID = 1;
+
+    var boxID = frmbID + '-control-box';
 
     var formData = new Map();
 
@@ -472,100 +593,15 @@ var _helpers = function _helpers(opts) {
 
     Field.prototype.json = function () {};
 
-    /**
-     * Prepare the properties for the field so they can be generated and edited later on.
-     * @param  {object} fieldData
-     * @return {array}            an array of property objects
-     */
-    var prepProperties = function prepProperties(fieldData) {
-      var properties = Object.assign({}, fieldData);
-
-      var availableRoles = properties.meta.roles.map(function (elem) {
-        elem.type = 'checkbox';
-        return elem;
-      }),
-          sortedProperties,
-          defaultOrder = {
-        meta: ['label', 'description', 'roles'],
-        attrs: ['class', 'required', 'name']
-      };
-
-      properties.name = properties.attrs.name || UTIL.nameAttr(properties.attrs.type);
-
-      console.log(properties);
-
-      // if field type is not checkbox, checkbox/radio group or select list, add max length
-      if ($.inArray(properties.type, ['checkbox', 'select', 'checkbox-group', 'date', 'autocomplete']) === -1 && !properties.attrs.maxLength) {
-        properties.attrs.maxLength = '';
-        defaultOrder.push('maxLength');
-      }
-
-      properties.meta.roles = {
-        options: availableRoles,
-        value: 1,
-        type: 'checkbox'
-      };
-
-      // options need a field for value, label and checkbox to select
-      if (fieldData.options) {
-        var optionFields = fieldData.options.map(function (elem, index) {
-          var option = {
-            options: [],
-            type: 'none'
-          };
-          for (var prop in elem) {
-            if (elem.hasOwnProperty(prop)) {
-              var field = {
-                value: elem[prop],
-                label: prop,
-                name: 'option-' + prop
-              };
-              if ('selected' === prop) {
-                field.type = 'checkbox';
-              }
-              option.options.push(field);
-            }
-          }
-          return option;
-        });
-
-        properties.options = {
-          options: optionFields,
-          label: opts.labels.options,
-          type: 'none'
-        };
-      }
-
-      delete properties.attrs.type;
-
-      for (var prop in properties) {
-        if (properties.hasOwnProperty(prop)) {
-          properties[prop] = sortProperties(defaultOrder, prop);
+    var sortProperties = function sortProperties(order, fieldData) {
+      for (var prop in fieldData) {
+        if (fieldData.hasOwnProperty(prop)) {
+          order = UTIL.uniqueArray(order.concat(Object.keys(fieldData))).map(function (elem) {
+            return elem;
+          });
         }
       }
-
-      return fieldProperties;
-    };
-
-    var sortProperties = function sortProperties(order, properties) {
-      var sortedProps = [];
-      if (Array.isArray(properties)) {
-        sortedProps = UTIL.uniqueArray(order.concat(Object.keys(properties))).map(function (elem) {
-          var property = {
-            name: elem
-          };
-          if (typeof properties[elem] === 'object') {
-            Object.assign(property, properties[elem]);
-          } else {
-            property.value = properties[elem];
-          }
-          return property;
-        });
-      } else {
-        sortedProps.push(properties);
-      }
-
-      return sortedProps;
+      return order;
     };
 
     var fieldTypes = [{
@@ -633,9 +669,9 @@ var _helpers = function _helpers(opts) {
         }];
       }
 
-      fieldData.properties = prepProperties(fieldData);
+      fieldData.property = new Properties(UTIL, opts, fieldData);
 
-      return $('<li/>', fieldData.attrs).data('fieldData', fieldData).html(fieldData.label).removeAttr('type');
+      return $('<li/>', fieldData.attrs).data('fieldData', fieldData).html(fieldData.meta.label).removeAttr('type');
     });
 
     cbUL.append(frmbFields);
@@ -810,10 +846,10 @@ var _helpers = function _helpers(opts) {
           delBtn = UTIL.markup('a', {
         'class': 'del-button btn',
         title: opts.labels.removeMessage,
-        id: 'del_' + lastID
+        id: 'del_' + UTIL.lastID
       }, opts.labels.remove),
           toggleBtn = UTIL.markup('a', {
-        id: 'frm-' + lastID,
+        id: 'frm-' + UTIL.lastID,
         'class': 'toggle-form btn icon-pencil',
         title: opts.labels.hide
       }),
@@ -836,7 +872,7 @@ var _helpers = function _helpers(opts) {
       }, fieldSettings(fieldData));
 
       li = UTIL.markup('li', {
-        // id: 'frm-' + lastID + '-item',
+        // id: 'frm-' + UTIL.lastID + '-item',
         id: UTIL.nameAttr(fieldData.attrs.type),
         'data-type': fieldData.attrs.type,
         'class': fieldData.attrs.type + ' form-field'
@@ -848,19 +884,25 @@ var _helpers = function _helpers(opts) {
         $sortableFields.append(li);
       }
 
-      $(document.getElementById('frm-' + lastID + '-item')).hide().slideDown(250);
+      $(document.getElementById('frm-' + UTIL.lastID + '-item')).hide().slideDown(250);
 
-      lastID++;
+      UTIL.lastID++;
 
-      var curFieldData = JSON.stringify(fieldData);
-      formData.set(fieldData.attrs.id, curFieldData);
+      // let curFieldData = JSON.stringify(fieldData);
+      // formData.set(fieldData.attrs.id, curFieldData);
       UTIL.save();
     };
 
     var fieldSettings = function fieldSettings(fieldData) {
       var markup = [],
-          propertyMarkup = fieldProperties(fieldData.properties).join('');
-      markup.push(propertyMarkup);
+          propOrder = fieldData.propOrder,
+          propertyMarkup = undefined;
+      for (var section in propOrder) {
+        if (fieldData.hasOwnProperty(section)) {
+          propertyMarkup = fieldProperties(propOrder[section], fieldData[section]).join('');
+          markup.push(propertyMarkup);
+        }
+      }
 
       return markup.join('');
     };
@@ -870,11 +912,14 @@ var _helpers = function _helpers(opts) {
      * @param  {object} fieldData configuration object for field
      * @return {string}        markup for advanced fields
      */
-    var fieldProperties = function fieldProperties(properties) {
-      return properties.map(function (property) {
+    var fieldProperties = function fieldProperties(order, properties) {
+      // console.log(order, properties);
+      return order.map(function (property) {
+
+        var fieldMarkup = fieldSetting(properties[property]);
         var field = UTIL.markup('div', {
-          'class': 'field-property ' + property.name + '-wrap'
-        }, fieldSetting(property));
+          'class': 'field-property ' + property + '-wrap'
+        }, fieldMarkup);
         return field;
       });
     };
@@ -883,7 +928,7 @@ var _helpers = function _helpers(opts) {
       var depth = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];
 
       var name = property.name || '',
-          propertyId = (name + '-' + lastID).replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase(),
+          propertyId = (name + '-' + UTIL.lastID).replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase(),
           label = property.label || opts.labels[name.toCamelCase()] || false,
           fields = property.fields || [],
           type = property.type || 'text',
@@ -919,7 +964,7 @@ var _helpers = function _helpers(opts) {
           attrs.placeholder = label.charAt(0).toUpperCase() + label.slice(1);
         } else if (depth === 1) {
           setTimeout(function () {
-            $('.property-options-1', document.getElementById('frm-' + lastID + '-item')).sortable();
+            $('.property-options-1', document.getElementById('frm-' + UTIL.lastID + '-item')).sortable();
           }, 1000);
         }
 
@@ -1266,12 +1311,19 @@ var _helpers = function _helpers(opts) {
   $.fn.formBuilder = function (options) {
     var form = this;
     return form.each(function () {
-      var element = $(this);
+      var element = $(this),
+          formBuilder;
       if (element.data('formBuilder')) {
-        return;
+        var existingFormBuilder = element.parents('.form-builder:eq(0)');
+        var newElement = element.clone();
+        existingFormBuilder.before(newElement);
+        existingFormBuilder.remove();
+        formBuilder = new FormBuilder(newElement, options);
+        newElement.data('formBuilder', formBuilder);
+      } else {
+        formBuilder = new FormBuilder(form, options);
+        element.data('formBuilder', formBuilder);
       }
-      var formBuilder = new FormBuilder(this, options);
-      element.data('formBuilder', formBuilder);
     });
   };
 })(jQuery);
