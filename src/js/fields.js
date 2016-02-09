@@ -1,4 +1,4 @@
-function Field(type, attrs = {}, meta = {}){
+function Fields(type, attrs = {}){
   'use strict';
 
   var field = document.createElement(type);

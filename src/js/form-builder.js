@@ -1,20 +1,10 @@
 var FormBuilder = function(element, options) {
   'use strict';
 
-  var formBuilder = this,
-    defaultFields = [{
-      meta: {
-        label: field.getLabel(),
-      },
-      attrs: {
-        name: 'text-input',
-        class;
-      }
-    }];
+  var formBuilder = this;
 
   var defaults = {
     prefix: 'fb-',
-    fields: defaultFields,
     dataType: 'json', // xml or json
     // Uneditable fields or other content you would like to
     // appear before and after regular fields.
@@ -36,7 +26,7 @@ var FormBuilder = function(element, options) {
     //   description: 'How can we reach you?',
     //   type: 'text'
     // }],
-    defaultFields: [],
+    // defaultFields: [],
     roles: [{
       value: 1,
       label: 'Administrator'
@@ -103,18 +93,35 @@ var FormBuilder = function(element, options) {
     }
   };
 
-  var opts = Object.assign(defaults, options);
+  // var opts = Object.assign(defaults, options);
+
+  // opts.fields = function() {
+  //   let fields = [
+  //     'text',
+  //     'textarea',
+  //     'select'
+  //   ];
+
+  //   return fields.map(function(index, elem) {
+
+  //     let field = {
+  //       meta: {
+  //         label: opts.labels[elem]
+  //       },
+  //       attrs: {
+  //         type: elem
+  //       }
+  //     };
+  //     return field;
+  //   });
+
+  // };
 
 
-  formBuilder.init = (function(element) {
-    formBuilder.controls = new Controls(opts);
 
-
-  })();
-
-
-
-
-
+  // formBuilder.init = (function(element) {
+  //   formBuilder.controls = new Controls(opts);
+  //   element.appendChild(formBuilder.controls);
+  // })(element);
 
 };
