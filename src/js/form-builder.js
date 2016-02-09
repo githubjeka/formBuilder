@@ -116,79 +116,6 @@
     };
 
 
-    /**
-     * Prepare the properties for the field so they can be generated and edited later on.
-     * @param  {object} fieldData
-     * @return {array}            an array of property objects
-     */
-    var prepProperties = function(fieldData) {
-
-      var availableRoles = fieldData.meta.roles.map(function(elem) {
-        elem.type = 'checkbox';
-        return elem;
-      });
-      fieldData.propOrder = {
-        meta: ['label', 'description', 'roles'],
-        attrs: ['required', 'name', 'class']
-      };
-
-      fieldData.attrs.name = fieldData.attrs.name || UTIL.nameAttr(fieldData.attrs.type);
-
-      // if field type is not checkbox, checkbox/radio group or select list, add max length
-      if ($.inArray(fieldData.type, ['checkbox', 'select', 'checkbox-group', 'date', 'autocomplete']) === -1 && !fieldData.attrs.maxLength) {
-        fieldData.attrs.maxLength = '';
-        fieldData.propOrder.attrs.push('maxLength');
-      }
-
-      fieldData.meta.roles = {
-        options: availableRoles,
-        value: 1,
-        type: 'checkbox'
-      };
-
-      // options need a field for value, label and checkbox to select
-      if (fieldData.options) {
-        let optionFields = fieldData.options.map(function(elem, index) {
-          let option = {
-            options: [],
-            type: 'none'
-          };
-          for (var prop in elem) {
-            if (elem.hasOwnProperty(prop)) {
-              let field = {
-                value: elem[prop],
-                label: prop,
-                name: 'option-' + prop
-              };
-              if ('selected' === prop) {
-                field.type = 'checkbox';
-              }
-              option.options.push(field);
-            }
-          }
-          return option;
-        });
-
-        fieldData.options = {
-          options: optionFields,
-          label: opts.labels.options,
-          type: 'none'
-        };
-      }
-
-      // delete fieldData.attrs.type;
-
-      for (var prop in fieldData) {
-        if (fieldData.hasOwnProperty(prop)) {
-          if (fieldData.propOrder[prop]) {
-            fieldData.propOrder[prop] = sortProperties(fieldData.propOrder[prop], fieldData[prop]);
-          }
-        }
-      }
-
-      return fieldData;
-    };
-
     var sortProperties = function(order, fieldData) {
       for (var prop in fieldData) {
         if (fieldData.hasOwnProperty(prop)) {
@@ -267,7 +194,7 @@
         }];
       }
 
-      fieldData = prepProperties(fieldData);
+      fieldData.property = new Properties(fieldData);
 
       return $('<li/>', fieldData.attrs)
         .data('fieldData', fieldData)
@@ -528,13 +455,6 @@
         return field;
       });
     };
-
-    var propMap = function(prop) {
-      var settings = $.extend({}, defaults, options);
-      var propertyMap = new Map();
-
-    };
-
 
     var fieldSetting = function(property, depth = 0) {
       var name = property.name || '',

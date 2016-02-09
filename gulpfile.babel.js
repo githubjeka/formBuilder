@@ -30,6 +30,7 @@ const files = {
   formBuilder: {
     js: [
       'src/js/helpers.js',
+      'src/js/properties.js',
       'src/js/kc-toggle.js',
       'src/js/to-xml.js',
       'src/js/form-builder.js'

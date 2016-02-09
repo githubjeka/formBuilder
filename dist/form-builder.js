@@ -246,6 +246,128 @@ var _helpers = function _helpers(opts) {
 };
 'use strict';
 
+var Properties = function Properties(fieldData) {
+  'use strict';
+
+  var properties = this,
+      _utils = {};
+
+  properties.order = {
+    meta: ['label', 'description', 'roles'],
+    attrs: ['required', 'name', 'class']
+  };
+
+  properties.roles = function () {
+    var roles = {
+      value: 1,
+      type: 'checkbox'
+    };
+
+    roles.options = fieldData.meta.roles.map(function (elem) {
+      elem.type = 'checkbox';
+      return elem;
+    });
+  };
+
+  // if field type is not checkbox, checkbox/radio group or select list, add max length
+  if ($.inArray(fieldData.type, ['checkbox', 'select', 'checkbox-group', 'date', 'autocomplete']) === -1 && !fieldData.attrs.maxLength) {
+    fieldData.attrs.maxLength = '';
+    properties.order.attrs.push('maxLength');
+  }
+
+  // options need a field for value, label and checkbox to select
+  if (fieldData.options) {
+    var optionFields = fieldData.options.map(function (elem, index) {
+      var option = {
+        options: [],
+        type: 'none'
+      };
+      for (var prop in elem) {
+        if (elem.hasOwnProperty(prop)) {
+          var field = {
+            value: elem[prop],
+            label: prop,
+            name: 'option-' + prop
+          };
+          if ('selected' === prop) {
+            field.type = 'checkbox';
+          }
+          option.options.push(field);
+        }
+      }
+      return option;
+    });
+
+    fieldData.options = {
+      options: optionFields,
+      label: opts.labels.options,
+      type: 'none'
+    };
+  }
+
+  _utils.fields = (function getFields(_x) {
+    var _again = true;
+
+    _function: while (_again) {
+      var fieldData = _x;
+      _again = false;
+
+      fieldData.fields = {};
+
+      for (var prop in fieldData) {
+        if (fieldData.hasOwnProperty(prop)) {
+          fieldData.fields[prop] = [];
+          if (typeof fieldData[prop] === 'object') {
+            _x = fieldData[prop];
+            _again = true;
+            prop = undefined;
+            continue _function;
+          } else {
+            var field = _utils.field(prop, fieldData[prop]);
+            fieldData.fields[prop].push(field);
+          }
+        }
+      }
+
+      return fieldData.fields;
+    }
+  })(fieldData);
+  console.log(_utils);
+
+  _utils.propMap = function (type, name) {
+    var propMap = new Map(),
+        propType = {
+      required: 'checkbox',
+      roles: 'checkbox'
+    };
+    propMap.set('type', propType);
+
+    return propMap.get(type)[name] || 'text';
+  };
+
+  _utils.field = function (propName, propValue) {
+    var defaultProp = {
+      name: UTIL.nameAttr(propName),
+      id: (propName + '-' + lastID).replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase(),
+      label: opts.labels[name.toCamelCase()],
+      fields: [],
+      type: _utils.propMap('type', propName),
+      value: ''
+    },
+        property = undefined;
+    if (typeof propValue === 'object') {
+      property = $.extend(defaultProp, propValue);
+    } else {
+      property = $.extend({}, defaultProp);
+    }
+
+    return property;
+  };
+
+  return properties;
+};
+'use strict';
+
 (function ($) {
   'use strict';
 
@@ -472,79 +594,6 @@ var _helpers = function _helpers(opts) {
 
     Field.prototype.json = function () {};
 
-    /**
-     * Prepare the properties for the field so they can be generated and edited later on.
-     * @param  {object} fieldData
-     * @return {array}            an array of property objects
-     */
-    var prepProperties = function prepProperties(fieldData) {
-
-      var availableRoles = fieldData.meta.roles.map(function (elem) {
-        elem.type = 'checkbox';
-        return elem;
-      });
-      fieldData.propOrder = {
-        meta: ['label', 'description', 'roles'],
-        attrs: ['required', 'name', 'class']
-      };
-
-      fieldData.attrs.name = fieldData.attrs.name || UTIL.nameAttr(fieldData.attrs.type);
-
-      // if field type is not checkbox, checkbox/radio group or select list, add max length
-      if ($.inArray(fieldData.type, ['checkbox', 'select', 'checkbox-group', 'date', 'autocomplete']) === -1 && !fieldData.attrs.maxLength) {
-        fieldData.attrs.maxLength = '';
-        fieldData.propOrder.attrs.push('maxLength');
-      }
-
-      fieldData.meta.roles = {
-        options: availableRoles,
-        value: 1,
-        type: 'checkbox'
-      };
-
-      // options need a field for value, label and checkbox to select
-      if (fieldData.options) {
-        var optionFields = fieldData.options.map(function (elem, index) {
-          var option = {
-            options: [],
-            type: 'none'
-          };
-          for (var prop in elem) {
-            if (elem.hasOwnProperty(prop)) {
-              var field = {
-                value: elem[prop],
-                label: prop,
-                name: 'option-' + prop
-              };
-              if ('selected' === prop) {
-                field.type = 'checkbox';
-              }
-              option.options.push(field);
-            }
-          }
-          return option;
-        });
-
-        fieldData.options = {
-          options: optionFields,
-          label: opts.labels.options,
-          type: 'none'
-        };
-      }
-
-      // delete fieldData.attrs.type;
-
-      for (var prop in fieldData) {
-        if (fieldData.hasOwnProperty(prop)) {
-          if (fieldData.propOrder[prop]) {
-            fieldData.propOrder[prop] = sortProperties(fieldData.propOrder[prop], fieldData[prop]);
-          }
-        }
-      }
-
-      return fieldData;
-    };
-
     var sortProperties = function sortProperties(order, fieldData) {
       for (var prop in fieldData) {
         if (fieldData.hasOwnProperty(prop)) {
@@ -621,7 +670,7 @@ var _helpers = function _helpers(opts) {
         }];
       }
 
-      fieldData = prepProperties(fieldData);
+      fieldData.property = new Properties(fieldData);
 
       return $('<li/>', fieldData.attrs).data('fieldData', fieldData).html(fieldData.meta.label).removeAttr('type');
     });
@@ -874,11 +923,6 @@ var _helpers = function _helpers(opts) {
         }, fieldMarkup);
         return field;
       });
-    };
-
-    var propMap = function propMap(prop) {
-      var settings = $.extend({}, defaults, options);
-      var propertyMap = new Map();
     };
 
     var fieldSetting = function fieldSetting(property) {
