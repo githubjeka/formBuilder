@@ -1,15 +1,21 @@
-var _helpers = function(opts) {
-  var _helpers = {
-    doCancel: false
-  },
-  $form = $(document.getElementById(opts.formID));
+function FBUtil(opts) {
+  var util = {
+      doCancel: false
+    },
+    $form = $(document.getElementById(opts.formID));
+
+
+  util.makeID = function(name) {
+    let time = new Date().getTime();
+    return `${name}-${time}`;
+  };
 
   /**
    * Remove duplicates from an array of elements
    * @param  {array} arrArg array with possible duplicates
    * @return {array}        array with only unique values
    */
-  _helpers.uniqueArray = (arrArg) => {
+  util.uniqueArray = (arrArg) => {
     return arrArg.filter((elem, pos, arr) => {
       return arr.indexOf(elem) === pos;
     });
@@ -20,10 +26,10 @@ var _helpers = function(opts) {
    * @param  {object} event
    * @param  {object} ui
    */
-  _helpers.startDrag = function(event, ui) {
+  util.startDrag = function(event, ui) {
     event = event;
     ui.item.addClass('moving');
-    _helpers.startIndex = $('li', this).index(ui.item);
+    util.startIndex = $('li', this).index(ui.item);
   };
 
   /**
@@ -31,10 +37,10 @@ var _helpers = function(opts) {
    * @param  {object} event
    * @param  {object} ui
    */
-  _helpers.stopDrag = function(event, ui) {
+  util.stopDrag = function(event, ui) {
     event = event;
     ui.item.removeClass('moving');
-    if (_helpers.doCancel) {
+    if (util.doCancel) {
       $(ui.sender).sortable('cancel');
       $(this).sortable('cancel');
     }
@@ -45,7 +51,7 @@ var _helpers = function(opts) {
    * @param  {string} str string to be converted
    * @return {string}     converter string
    */
-  _helpers.safename = function(str) {
+  util.safename = function(str) {
     return str.replace(/\s/g, '-').replace(/[^a-zA-Z0-9\-]/g, '').toLowerCase();
   };
 
@@ -55,7 +61,7 @@ var _helpers = function(opts) {
    * @param  {string} str string with possible number
    * @return {string}     string without numbers
    */
-  _helpers.forceNumber = function(str) {
+  util.forceNumber = function(str) {
     return str.replace(/[^0-9]/g, '');
   };
 
@@ -64,7 +70,7 @@ var _helpers = function(opts) {
    * @param  {[type]} tt [description]
    * @return {[type]}    [description]
    */
-  _helpers.initTooltip = function(tt) {
+  util.initTooltip = function(tt) {
     var tooltip = tt.find('.tooltip');
     tt.mouseenter(function() {
       if (tooltip.outerWidth() > 200) {
@@ -79,7 +85,7 @@ var _helpers = function(opts) {
   };
 
   // saves the field data to our canvas (elem)
-  _helpers.save = function() {
+  util.save = function() {
 
     let $fieldData = $form.children('li.form-field').not('.disabled');
 
@@ -93,7 +99,7 @@ var _helpers = function(opts) {
   };
 
   // updatePreview will generate the preview for radio and checkbox groups
-  _helpers.updatePreview = function(field) {
+  util.updatePreview = function(field) {
     var preview;
 
     // $('.sortable-options li', field).each(function() {
@@ -111,16 +117,16 @@ var _helpers = function(opts) {
    * @param  {string} type eg. 'text'
    * @return {string}      'text-1443885404543'
    */
-  _helpers.nameAttr = function(type) {
+  util.nameAttr = function(type) {
     var epoch = new Date().getTime();
     return type + '-' + epoch;
   };
 
-  _helpers.htmlEncode = function(value) {
+  util.htmlEncode = function(value) {
     return $('<div/>').text(value).html();
   };
 
-  _helpers.htmlDecode = function(value) {
+  util.htmlDecode = function(value) {
     return $('<div/>').html(value).text();
   };
 
@@ -128,7 +134,7 @@ var _helpers = function(opts) {
    * Some basic validation before submitting our form to the backend
    * @return {void}
    */
-  _helpers.validateForm = function() {
+  util.validateForm = function() {
     var errors = [];
     // check for empty field labels
     $('input[name="label"], input[type="text"].option', $form).each(function() {
@@ -164,7 +170,7 @@ var _helpers = function(opts) {
    * @param  {object} field [description]
    * @return {void}
    */
-  _helpers.disabledTT = function(field) {
+  util.disabledTT = function(field) {
     var title = field.attr('data-tooltip');
     if (title) {
       field.removeAttr('title').data('tip_text', title);
@@ -200,8 +206,8 @@ var _helpers = function(opts) {
    * @param  {string} content we wrap this
    * @return {string}
    */
-  _helpers.markup = function(type, attrs = {}, content = '') {
-    attrs = _helpers.attrString(attrs);
+  util.markup = function(type, attrs = {}, content = '') {
+    attrs = util.attrString(attrs);
     content = Array.isArray(content) ? content.join('') : content;
     let inlineElems = ['input'],
       template = inlineElems.indexOf(type) === -1 ? `<${type} ${attrs}>${content}</${type}>` : `<${type} ${attrs}/>`;
@@ -214,7 +220,7 @@ var _helpers = function(opts) {
    * @param  {object} attrs
    * @return {string}
    */
-  _helpers.attrString = function(attrs) {
+  util.attrString = function(attrs) {
     var attributes = [];
     for (var attr in attrs) {
       if (attrs.hasOwnProperty(attr)) {
@@ -229,12 +235,12 @@ var _helpers = function(opts) {
    * Remove a field from the form
    * @param  {object} $field [description]
    */
-  _helpers.removeField = function($field) {
+  util.removeField = function($field) {
     $field.slideUp(250, function() {
       $(this).remove();
-      _helpers.save();
+      util.save();
     });
   };
 
-  return _helpers;
+  return util;
 };

@@ -29,14 +29,15 @@ const files = {
   ],
   formBuilder: {
     js: [
-      'src/js/helpers.js',
+      'src/js/util.js',
       // 'src/js/properties.js',
-      // 'src/js/fields.js',
-      // 'src/js/field.js',
-      // 'src/js/controls.js',
+      'src/js/fields.js',
+      'src/js/field.js',
+      'src/js/controls.js',
       'src/js/kc-toggle.js',
       'src/js/to-xml.js',
-      'src/js/form-builder.js'
+      'src/js/form-builder.js',
+      'src/js/jquery-form-builder.js'
     ],
     sass: ['src/sass/form-builder.scss']
   },

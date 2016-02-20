@@ -4,12 +4,12 @@
   $.fn.formBuilder = function(options) {
     var form = this;
     return form.each(function() {
-      var element = $(this);
-      if (element.data('formBuilder')) {
+      var element = this,
+      formBuilder = new FormBuilder(element, options);
+      if ($(formBuilder).data('formBuilder')) {
         return;
       }
-      var formBuilder = new FormBuilder(this, options);
-      element.data('formBuilder', formBuilder);
+      $(formBuilder).data('formBuilder', formBuilder);
     });
   };
 

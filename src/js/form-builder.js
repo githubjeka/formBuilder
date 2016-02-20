@@ -93,35 +93,51 @@ var FormBuilder = function(element, options) {
     }
   };
 
-  // var opts = Object.assign(defaults, options);
+  var opts = Object.assign(defaults, options);
 
-  // opts.fields = function() {
-  //   let fields = [
-  //     'text',
-  //     'textarea',
-  //     'select'
-  //   ];
+  var _util = new FBUtil(opts);
 
-  //   return fields.map(function(index, elem) {
-
-  //     let field = {
-  //       meta: {
-  //         label: opts.labels[elem]
-  //       },
-  //       attrs: {
-  //         type: elem
-  //       }
-  //     };
-  //     return field;
-  //   });
-
-  // };
+  formBuilder.id = _util.makeID('form-builder');
 
 
+  opts.fields = (function() {
+    let fields = [
+      'text',
+      'textarea',
+      'select'
+    ];
 
-  // formBuilder.init = (function(element) {
-  //   formBuilder.controls = new Controls(opts);
-  //   element.appendChild(formBuilder.controls);
-  // })(element);
+    return fields.map(function(elem, index) {
+
+      let field = {
+        meta: {
+          label: opts.labels[elem]
+        },
+        attrs: {
+          type: elem
+        }
+      };
+      return field;
+    });
+
+  })();
+
+
+  formBuilder.init = (function(element) {
+    var wrapper = document.createElement('div');
+    wrapper.setAttribute('id', formBuilder.id);
+    wrapper.setAttribute('class', 'form-builder');
+
+    formBuilder.controls = new Controls(opts);
+    formBuilder.stage = document.createElement('div');
+    formBuilder.stage.setAttribute('class', 'fb-stage');
+    formBuilder.stage.setAttribute('id', _util.makeID(formBuilder.stage.className));
+    formBuilder.stage.setAttribute('class', `${formBuilder.stage.className} col-md-8`);
+
+    wrapper.appendChild(formBuilder.controls);
+    wrapper.appendChild(formBuilder.stage);
+    element.parentElement.replaceChild(wrapper, element);
+  })(element);
+
 
 };

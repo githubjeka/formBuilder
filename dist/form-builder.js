@@ -5,18 +5,23 @@ Author: Kevin Chappell <kevin.b.chappell@gmail.com>
 */
 'use strict';
 
-var _helpers = function _helpers(opts) {
-  var _helpers = {
+function FBUtil(opts) {
+  var util = {
     doCancel: false
   },
       $form = $(document.getElementById(opts.formID));
+
+  util.makeID = function (name) {
+    var time = new Date().getTime();
+    return name + '-' + time;
+  };
 
   /**
    * Remove duplicates from an array of elements
    * @param  {array} arrArg array with possible duplicates
    * @return {array}        array with only unique values
    */
-  _helpers.uniqueArray = function (arrArg) {
+  util.uniqueArray = function (arrArg) {
     return arrArg.filter(function (elem, pos, arr) {
       return arr.indexOf(elem) === pos;
     });
@@ -27,10 +32,10 @@ var _helpers = function _helpers(opts) {
    * @param  {object} event
    * @param  {object} ui
    */
-  _helpers.startDrag = function (event, ui) {
+  util.startDrag = function (event, ui) {
     event = event;
     ui.item.addClass('moving');
-    _helpers.startIndex = $('li', this).index(ui.item);
+    util.startIndex = $('li', this).index(ui.item);
   };
 
   /**
@@ -38,10 +43,10 @@ var _helpers = function _helpers(opts) {
    * @param  {object} event
    * @param  {object} ui
    */
-  _helpers.stopDrag = function (event, ui) {
+  util.stopDrag = function (event, ui) {
     event = event;
     ui.item.removeClass('moving');
-    if (_helpers.doCancel) {
+    if (util.doCancel) {
       $(ui.sender).sortable('cancel');
       $(this).sortable('cancel');
     }
@@ -52,7 +57,7 @@ var _helpers = function _helpers(opts) {
    * @param  {string} str string to be converted
    * @return {string}     converter string
    */
-  _helpers.safename = function (str) {
+  util.safename = function (str) {
     return str.replace(/\s/g, '-').replace(/[^a-zA-Z0-9\-]/g, '').toLowerCase();
   };
 
@@ -61,7 +66,7 @@ var _helpers = function _helpers(opts) {
    * @param  {string} str string with possible number
    * @return {string}     string without numbers
    */
-  _helpers.forceNumber = function (str) {
+  util.forceNumber = function (str) {
     return str.replace(/[^0-9]/g, '');
   };
 
@@ -70,7 +75,7 @@ var _helpers = function _helpers(opts) {
    * @param  {[type]} tt [description]
    * @return {[type]}    [description]
    */
-  _helpers.initTooltip = function (tt) {
+  util.initTooltip = function (tt) {
     var tooltip = tt.find('.tooltip');
     tt.mouseenter(function () {
       if (tooltip.outerWidth() > 200) {
@@ -85,7 +90,7 @@ var _helpers = function _helpers(opts) {
   };
 
   // saves the field data to our canvas (elem)
-  _helpers.save = function () {
+  util.save = function () {
 
     var $fieldData = $form.children('li.form-field').not('.disabled');
 
@@ -99,7 +104,7 @@ var _helpers = function _helpers(opts) {
   };
 
   // updatePreview will generate the preview for radio and checkbox groups
-  _helpers.updatePreview = function (field) {
+  util.updatePreview = function (field) {
     var preview;
 
     // $('.sortable-options li', field).each(function() {
@@ -116,16 +121,16 @@ var _helpers = function _helpers(opts) {
    * @param  {string} type eg. 'text'
    * @return {string}      'text-1443885404543'
    */
-  _helpers.nameAttr = function (type) {
+  util.nameAttr = function (type) {
     var epoch = new Date().getTime();
     return type + '-' + epoch;
   };
 
-  _helpers.htmlEncode = function (value) {
+  util.htmlEncode = function (value) {
     return $('<div/>').text(value).html();
   };
 
-  _helpers.htmlDecode = function (value) {
+  util.htmlDecode = function (value) {
     return $('<div/>').html(value).text();
   };
 
@@ -133,7 +138,7 @@ var _helpers = function _helpers(opts) {
    * Some basic validation before submitting our form to the backend
    * @return {void}
    */
-  _helpers.validateForm = function () {
+  util.validateForm = function () {
     var errors = [];
     // check for empty field labels
     $('input[name="label"], input[type="text"].option', $form).each(function () {
@@ -169,7 +174,7 @@ var _helpers = function _helpers(opts) {
    * @param  {object} field [description]
    * @return {void}
    */
-  _helpers.disabledTT = function (field) {
+  util.disabledTT = function (field) {
     var title = field.attr('data-tooltip');
     if (title) {
       field.removeAttr('title').data('tip_text', title);
@@ -205,11 +210,11 @@ var _helpers = function _helpers(opts) {
    * @param  {string} content we wrap this
    * @return {string}
    */
-  _helpers.markup = function (type) {
+  util.markup = function (type) {
     var attrs = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
     var content = arguments.length <= 2 || arguments[2] === undefined ? '' : arguments[2];
 
-    attrs = _helpers.attrString(attrs);
+    attrs = util.attrString(attrs);
     content = Array.isArray(content) ? content.join('') : content;
     var inlineElems = ['input'],
         template = inlineElems.indexOf(type) === -1 ? '<' + type + ' ' + attrs + '>' + content + '</' + type + '>' : '<' + type + ' ' + attrs + '/>';
@@ -221,7 +226,7 @@ var _helpers = function _helpers(opts) {
    * @param  {object} attrs
    * @return {string}
    */
-  _helpers.attrString = function (attrs) {
+  util.attrString = function (attrs) {
     var attributes = [];
     for (var attr in attrs) {
       if (attrs.hasOwnProperty(attr)) {
@@ -235,15 +240,71 @@ var _helpers = function _helpers(opts) {
    * Remove a field from the form
    * @param  {object} $field [description]
    */
-  _helpers.removeField = function ($field) {
+  util.removeField = function ($field) {
     $field.slideUp(250, function () {
       $(this).remove();
-      _helpers.save();
+      util.save();
     });
   };
 
-  return _helpers;
+  return util;
 };
+'use strict';
+
+function Fields(type) {
+  'use strict';
+
+  var attrs = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+  var field = document.createElement(type);
+
+  for (var attr in attrs) {
+    if (attrs.hasOwnProperty(attr)) {
+      field[attr] = attr;
+    }
+  }
+
+  return field;
+}
+'use strict';
+
+function Field(type) {
+  'use strict';
+
+  var attrs = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+  var meta = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
+  var field = document.createElement(type);
+
+  for (var attr in attrs) {
+    if (attrs.hasOwnProperty(attr)) {
+      field.setAttribute(attr, attrs[attr]);
+    }
+  }
+
+  return field;
+}
+'use strict';
+
+function Controls(opts) {
+  'use strict';
+
+  var controls = document.createElement('div');
+  controls.className = 'fb-control-wrapper col-md-4';
+
+  opts.fields.map(function (elem, index) {
+
+    var inputControl = new Field('button', {
+      'class': '' + opts.prefix + elem.attrs.type + '-control fb-control',
+      type: 'button'
+    }),
+        label = document.createTextNode(elem.meta.label);
+    inputControl.appendChild(label);
+    controls.appendChild(inputControl);
+
+    return inputControl;
+  });
+
+  return controls;
+}
 'use strict';
 
 var FormBuilder = function FormBuilder(element, options) {
@@ -341,32 +402,59 @@ var FormBuilder = function FormBuilder(element, options) {
     }
   };
 
-  // var opts = Object.assign(defaults, options);
+  var opts = Object.assign(defaults, options);
 
-  // opts.fields = function() {
-  //   let fields = [
-  //     'text',
-  //     'textarea',
-  //     'select'
-  //   ];
+  var _util = new FBUtil(opts);
 
-  //   return fields.map(function(index, elem) {
+  formBuilder.id = _util.makeID('form-builder');
 
-  //     let field = {
-  //       meta: {
-  //         label: opts.labels[elem]
-  //       },
-  //       attrs: {
-  //         type: elem
-  //       }
-  //     };
-  //     return field;
-  //   });
+  opts.fields = (function () {
+    var fields = ['text', 'textarea', 'select'];
 
-  // };
+    return fields.map(function (elem, index) {
 
-  // formBuilder.init = (function(element) {
-  //   formBuilder.controls = new Controls(opts);
-  //   element.appendChild(formBuilder.controls);
-  // })(element);
+      var field = {
+        meta: {
+          label: opts.labels[elem]
+        },
+        attrs: {
+          type: elem
+        }
+      };
+      return field;
+    });
+  })();
+
+  formBuilder.init = (function (element) {
+    var wrapper = document.createElement('div');
+    wrapper.setAttribute('id', formBuilder.id);
+    wrapper.setAttribute('class', 'form-builder');
+
+    formBuilder.controls = new Controls(opts);
+    formBuilder.stage = document.createElement('div');
+    formBuilder.stage.setAttribute('class', 'fb-stage');
+    formBuilder.stage.setAttribute('id', _util.makeID(formBuilder.stage.className));
+    formBuilder.stage.setAttribute('class', formBuilder.stage.className + ' col-md-8');
+
+    wrapper.appendChild(formBuilder.controls);
+    wrapper.appendChild(formBuilder.stage);
+    element.parentElement.replaceChild(wrapper, element);
+  })(element);
 };
+'use strict';
+
+(function ($) {
+  'use strict';
+
+  $.fn.formBuilder = function (options) {
+    var form = this;
+    return form.each(function () {
+      var element = this,
+          formBuilder = new FormBuilder(element, options);
+      if ($(formBuilder).data('formBuilder')) {
+        return;
+      }
+      $(formBuilder).data('formBuilder', formBuilder);
+    });
+  };
+})(jQuery);
